@@ -89,7 +89,6 @@
     .menuHeading{max-width:900px;width:100%}
     .menuHeading .mh-line{margin:6px 0}
     .menuHeading .mh-item{margin:2px 0}
-
     /* ===== Audio Gate Overlay (locks UI until intro.mp3 ends) ===== */
     #audioGate{
       position:fixed;
@@ -112,7 +111,6 @@
     }
     #audioGate .panel h2{margin:0 0 10px;font-size:18px;color:#0f172a}
     #audioGate .panel p{margin:0 0 14px;font-size:13px;color:#334155;line-height:1.35}
-
     /* ===== Centered name-required alert modal ===== */
     #nameAlert{
       position:fixed;
@@ -141,7 +139,6 @@
     .alertBox h3{margin:6px 0 8px;color:#b71c1c}
     .alertBox p{margin:0 0 14px;font-size:14px;color:#333}
     .alertBox button{background:#d32f2f}
-
     /* Preview block */
     #certPreviewFrame{
       width:100%;
@@ -160,6 +157,12 @@
   <script>
     /* ===== Asset ===== */
     const INTRO_AUDIO = 'intro.mp3';
+
+    /* ===== Certificate Template (auto-load) =====
+       Put Certificate_Adapt_IT.pdf next to this HTML on GitHub Pages.
+       The code will automatically fetch it using the current page base URL.
+    */
+    const CERT_TEMPLATE_FILENAME = 'Certificate_Adapt_IT.pdf';
 
     /* ===== Modules ===== */
     const modules = [
@@ -187,25 +190,25 @@
 
     /* ===== Screen switching ===== */
     function stopVideo(){
- const v = $('video');
- if(!v) return;
- try{
-  v.pause();
-  v.currentTime = 0;      // reset to start (true "stop" behavior)
-  v.removeAttribute('src');
-  v.load();               // forces browser to release the stream/buffer
- }catch(e){}
-}
+      const v = $('video');
+      if(!v) return;
+      try{
+        v.pause();
+        v.currentTime = 0; // reset to start (true "stop" behavior)
+        v.removeAttribute('src');
+        v.load(); // forces browser to release the stream/buffer
+      }catch(e){}
+    }
 
-function show(view){
- // If we are leaving the player screen, stop the video
- if(view !== 'player') stopVideo();
+    function show(view){
+      // If we are leaving the player screen, stop the video
+      if(view !== 'player') stopVideo();
+      ['menu','player','quiz','complete'].forEach(v => $(v).classList.add('hidden'));
+      $(view).classList.remove('hidden');
+      $('progressCard').classList.toggle('hidden', view !== 'menu');
+    }
 
- ['menu','player','quiz','complete'].forEach(v => $(v).classList.add('hidden'));
- $(view).classList.remove('hidden');
- $('progressCard').classList.toggle('hidden', view !== 'menu');
-}
-/* ===== Audio Gate ===== */
+    /* ===== Audio Gate ===== */
     function setGateMessage(msg){
       const p = $('gateMsg');
       if(p) p.innerText = msg;
@@ -214,7 +217,6 @@ function show(view){
     function startIntroAudio(){
       if(introStarted) return;
       introStarted = true;
-
       const a = $('menuAudio');
       if(!a){
         // If audio element missing, unlock anyway
@@ -223,15 +225,12 @@ function show(view){
         update();
         return;
       }
-
       a.src = INTRO_AUDIO;
       a.currentTime = 0;
       a.loop = false;
       a.preload = 'auto';
-
       $('startBtn').disabled = true;
       setGateMessage('Introduction .... Please wait');
-
       const playPromise = a.play();
       if(playPromise && typeof playPromise.catch === 'function'){
         playPromise.catch((err) => {
@@ -242,13 +241,11 @@ function show(view){
           update();
         });
       }
-
       a.onended = () => {
         introFinished = true;
         $('audioGate').classList.add('hidden');
         update();
       };
-
       a.onerror = () => {
         console.error('Audio load error. Check intro.mp3 location/name.');
         // Unlock training even if audio missing
@@ -309,7 +306,6 @@ function show(view){
       $('progressFill').style.width = pct + '%';
       $('progressPct').innerText = pct + '%';
       $('progressText').innerText = `Progress: ${done} of ${total} modules completed`;
-
       const grid = $('moduleGrid');
       grid.innerHTML = '';
       modules.forEach((m,i) => {
@@ -330,9 +326,9 @@ function show(view){
     }
 
     /* =======================================================================
-      CERTIFICATE: upload template + insert name/date + preview + download
-    ======================================================================= */
-    let certTemplateBytes = null; // ArrayBuffer of uploaded template PDF
+       CERTIFICATE: auto-load template + insert name/date + preview + download
+       ======================================================================= */
+    let certTemplateBytes = null; // ArrayBuffer of template PDF (auto-loaded via fetch, or manual upload fallback)
     let lastGeneratedUrl = null;  // Blob URL for preview/download
     let lastGeneratedBlob = null;
 
@@ -349,19 +345,9 @@ function show(view){
       return true;
     }
 
-    function formatDateForCertificate(inputValue){
+    function formatDateForCertificate(){
       // Output format: "14 March 2026"
-      let dt;
-      if(!inputValue){
-        dt = new Date();
-      }else{
-        try{
-          const [y,m,d] = inputValue.split('-').map(Number);
-          dt = new Date(y, (m)-1, d);
-        }catch{
-          dt = new Date();
-        }
-      }
+      const dt = new Date();
       return new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'long', year:'numeric' }).format(dt);
     }
 
@@ -377,6 +363,33 @@ function show(view){
       if(dl) dl.disabled = true;
     }
 
+    /* ===== Auto-load Certificate Template from same folder as current HTML ===== */
+    async function loadTemplateFromServer(){
+      try{
+        // Build URL relative to the current page (robust on GitHub Pages project URLs)
+        const templateUrl = new URL(CERT_TEMPLATE_FILENAME, window.location.href).href;
+
+        setCertStatus('Template: loading automatically...');
+        const res = await fetch(templateUrl, { cache: 'no-store' });
+        if(!res.ok) throw new Error(`Template not found (${res.status})`);
+
+        certTemplateBytes = await res.arrayBuffer();
+        setCertStatus(`Template: loaded automatically (${CERT_TEMPLATE_FILENAME})`);
+        clearPreview();
+
+        // Hide manual upload UI (optional)
+        const input = $('certTemplateUpload');
+        if(input && input.parentElement) input.parentElement.style.display = 'none';
+
+        return true;
+      }catch(e){
+        console.warn('Auto-load template failed:', e);
+        setCertStatus(`Template: auto-load failed. Please upload ${CERT_TEMPLATE_FILENAME} manually.`);
+        return false;
+      }
+    }
+
+    /* ===== Manual upload fallback (only used if auto-load fails) ===== */
     function initCertificateTemplate(){
       const up = $('certTemplateUpload');
       if(up){
@@ -392,7 +405,7 @@ function show(view){
           };
           fr.readAsArrayBuffer(file);
         });
-        setCertStatus('Template: please upload Certificate_Adapt_IT.pdf to generate the certificate.');
+        setCertStatus(`Template: please upload ${CERT_TEMPLATE_FILENAME} to generate the certificate.`);
       }
     }
 
@@ -404,15 +417,13 @@ function show(view){
     async function buildCertificateBytes(name, dateStr){
       const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
       if(!certTemplateBytes){
-        alert('No certificate template loaded. Please upload the certificate PDF first.');
+        alert(`No certificate template loaded. Ensure ${CERT_TEMPLATE_FILENAME} is next to the HTML, or upload it.`);
         return null;
       }
       const safeName = (name || '').replace(/\s+/g,' ').trim();
-
       const pdfDoc = await PDFDocument.load(certTemplateBytes);
       const page = pdfDoc.getPages()[0];
       const { width } = page.getSize();
-
       const nameFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       const dateFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
@@ -426,7 +437,7 @@ function show(view){
         color: rgb(0,0,0)
       });
 
-      // Date near signature line (auto-today)
+      // Date near signature line (always today)
       page.drawText(dateStr, {
         x: CERT_DATE_X, y: CERT_DATE_Y,
         size: 12, font: dateFont,
@@ -444,8 +455,7 @@ function show(view){
       }
       if(!ensurePdfLibLoaded()) return;
 
-      // Date picker removed → always today
-      const dateStr = formatDateForCertificate('');
+      const dateStr = formatDateForCertificate();
 
       try{
         const bytes = await buildCertificateBytes(name, dateStr);
@@ -475,6 +485,7 @@ function show(view){
         .replace(/[^a-z0-9\- _]/gi,'')
         .trim()
         .replace(/\s+/g,'_');
+
       const a = document.createElement('a');
       a.href = lastGeneratedUrl;
       a.download = `ITS_Integrator_Certificate_${safe}.pdf`;
@@ -493,7 +504,12 @@ function show(view){
     window.addEventListener('load', () => {
       show('menu');
       update();
-      initCertificateTemplate();
+
+      // Auto-load certificate template from same folder as this HTML
+      loadTemplateFromServer().then(ok => {
+        // Only enable manual upload if auto-load fails
+        if(!ok) initCertificateTemplate();
+      });
 
       // Show gate immediately (menu locked)
       $('audioGate').classList.remove('hidden');
@@ -524,6 +540,7 @@ function show(view){
   <header><h1>ITS Integrator – Basic Technical Overview</h1></header>
 
   <div class="container ui-scale">
+
     <!-- Progress shown only on menu -->
     <div id="progressCard" class="card">
       <div class="progressWrap">
@@ -538,7 +555,6 @@ function show(view){
     <!-- MENU -->
     <div id="menu" class="card">
       <h2 style="text-align:center">Main Menu</h2>
-
       <div class="menuHeadingWrap">
         <div class="menuHeading hint">
           <div class="mh-line">
@@ -554,7 +570,6 @@ function show(view){
           </div>
         </div>
       </div>
-
       <div id="moduleGrid"></div>
     </div>
 
@@ -592,6 +607,7 @@ function show(view){
       <div class="row" style="margin-top:16px">
         <input id="learnerName" placeholder="Enter learner name" />
 
+        <!-- Manual upload control is kept for fallback, but will be auto-hidden if auto-load succeeds -->
         <label class="secondary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:8px;color:#fff;cursor:pointer">
           📄 Upload certificate PDF
           <input type="file" id="certTemplateUpload" accept="application/pdf" style="display:none">
@@ -611,6 +627,7 @@ function show(view){
         <iframe id="certPreviewFrame" title="Certificate Preview"></iframe>
       </div>
     </div>
+
   </div>
 
   <!-- Name required alert -->

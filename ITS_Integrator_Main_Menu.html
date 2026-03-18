@@ -94,7 +94,7 @@
     .menuHeading .mh-line{margin:6px 0}
     .menuHeading .mh-item{margin:2px 0}
 
-    /* ===== Audio Gate Overlay (locks UI until intro.mp3 ends) ===== */
+    /* ===== Audio Gate Overlay (locks UI until Intro.mp3 ends) ===== */
     #audioGate{
       position:fixed;
       inset:0;
@@ -341,7 +341,7 @@
         update();
       };
       a.onerror = () => {
-        console.error('Audio load error. Check intro.mp3 location/name.');
+        console.error('Audio load error. Check Intro.mp3 location/name.');
         introFinished = true;
         $('audioGate').classList.add('hidden');
         update();

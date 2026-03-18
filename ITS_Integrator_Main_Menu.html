@@ -4,13 +4,14 @@
   <meta charset="UTF-8" />
   <title>ITS Integrator – Basic Technical Training</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
     :root{--brand:#003366;--accent:#00B0F0;--accent2:#008cc1;--muted:#6c757d;--bg:#f4f6f8;}
     body{font-family:Arial, sans-serif;background:var(--bg);margin:0}
-    /* Header */
+
     header{background:var(--brand);color:#fff;padding:10px;text-align:center}
     header h1{margin:0;font-size:18px}
-    /* Layout */
+
     .container{
       max-width:900px;
       margin:auto;
@@ -22,7 +23,7 @@
       padding:12px;
     }
     .ui-scale{transform:scale(0.95);transform-origin:top center}
-    /* Card */
+
     .card{
       background:#fff;
       border-radius:12px;
@@ -31,7 +32,7 @@
       box-shadow:0 2px 10px rgba(0,0,0,.06);
     }
     .hidden{display:none}
-    /* Buttons */
+
     button{
       padding:12px 16px;
       border:none;
@@ -44,18 +45,21 @@
     button:hover{background:var(--accent2)}
     button:disabled{background:#a9cfe0;cursor:not-allowed}
     .secondary{background:var(--muted)}
+    .danger{background:#d32f2f}
+    .danger:hover{background:#b71c1c}
+
     .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center}
-    /* Progress */
+
     .progressWrap{display:flex;align-items:center;gap:10px}
     .progress{flex:1;height:12px;background:#dbe7f2;border-radius:999px;overflow:hidden}
     .progress div{height:100%;background:var(--accent);width:0%}
     .pct{font-weight:bold}
     .hint{font-size:13px;color:#555;line-height:1.35}
     .success{color:green;font-weight:bold}
-    /* Center menu buttons */
+
     #moduleGrid{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:12px}
     #moduleGrid button{width:90%;max-width:520px}
-    /* Video / iframe */
+
     video, iframe{
       width:100%;
       max-width:900px;
@@ -65,21 +69,21 @@
       border:2px solid var(--brand);
       background:black;
     }
-    /* Quiz size */
+
     #quizFrame{
       height:40vh;
       min-height:500px;
       max-width:900px;
       background:#fff;
     }
-    /* Inputs */
+
     input{
       padding:10px;
       border-radius:6px;
       border:1px solid #ccc;
       min-width:260px;
     }
-    /* Main Menu heading block centered */
+
     .menuHeadingWrap{
       display:flex;
       justify-content:center;
@@ -89,7 +93,8 @@
     .menuHeading{max-width:900px;width:100%}
     .menuHeading .mh-line{margin:6px 0}
     .menuHeading .mh-item{margin:2px 0}
-    /* ===== Audio Gate Overlay (locks UI until intro.mp3 ends) ===== */
+
+    /* ===== Audio Gate Overlay ===== */
     #audioGate{
       position:fixed;
       inset:0;
@@ -111,7 +116,8 @@
     }
     #audioGate .panel h2{margin:0 0 10px;font-size:18px;color:#0f172a}
     #audioGate .panel p{margin:0 0 14px;font-size:13px;color:#334155;line-height:1.35}
-    /* ===== Centered name-required alert modal ===== */
+
+    /* ===== Name-required alert modal ===== */
     #nameAlert{
       position:fixed;
       inset:0;
@@ -131,14 +137,11 @@
       text-align:center;
       box-shadow:0 20px 50px rgba(0,0,0,.4);
     }
-    .alertIcon{
-      font-size:42px;
-      color:#d32f2f;
-      margin-bottom:6px;
-    }
+    .alertIcon{font-size:42px;color:#d32f2f;margin-bottom:6px;}
     .alertBox h3{margin:6px 0 8px;color:#b71c1c}
     .alertBox p{margin:0 0 14px;font-size:14px;color:#333}
     .alertBox button{background:#d32f2f}
+
     /* Preview block */
     #certPreviewFrame{
       width:100%;
@@ -151,18 +154,20 @@
   </style>
 
   <!-- PDF certificate engine (pdf-lib). Offline-first: tries local pdf-lib.min.js, falls back to CDN. -->
-  <script src="pdf-lib.min.js"
-          onerror="this.onerror=null;this.src='https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';"></script>
+  <script
+    src="pdf-lib.min.js"
+    onerror="this.onerror=null;this.src='https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';">
+  </script>
 
   <script>
-    /* ===== Asset ===== */
-    const INTRO_AUDIO = 'intro.mp3';
-
-    /* ===== Certificate Template (auto-load) =====
-       Put Certificate_Adapt_IT.pdf next to this HTML on GitHub Pages.
-       The code will automatically fetch it using the current page base URL.
-    */
+    /* =========================
+       CONFIG
+    ========================== */
+    const INTRO_AUDIO = 'Intro.mp3';
     const CERT_TEMPLATE_FILENAME = 'Certificate_Adapt_IT.pdf';
+
+    /* localStorage key (versioned so you can change format later) */
+    const STORAGE_KEY = 'its_integrator_training_progress_v2';
 
     /* ===== Modules ===== */
     const modules = [
@@ -174,41 +179,114 @@
       {t:'Administration',v:'ITS Integrator Basic Training_Admin.mp4',q:'https://forms.gle/7xwPe7an3LPx4Ee99'}
     ];
 
-    /*
-      Sequential completion rule:
-      - You cannot start module N unless module N-1 is completed
-      - Module completion is recorded when learner clicks ✅ Done on the quiz screen
-    */
+    /* =========================
+       STATE
+    ========================== */
     let completed = Array(modules.length).fill(false);
     let currentQuiz = null;
 
-    /* Audio gate state: menu locked until intro.mp3 ends */
     let introFinished = false;
-    let introStarted = false;
+    let introStarted  = false;
+
+    /* Certificate state */
+    let certTemplateBytes = null;
+    let lastGeneratedUrl  = null;
+    let lastGeneratedBlob = null;
 
     const $ = id => document.getElementById(id);
 
-    /* ===== Screen switching ===== */
+    /* =========================
+       PERSISTENCE (progress + learner name)
+    ========================== */
+    function getLearnerName(){
+      return ($('learnerName')?.value || '').trim();
+    }
+
+    function saveProgress(){
+      try{
+        const data = {
+          completed,
+          introFinished,
+          learnerName: getLearnerName()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }catch(e){
+        console.warn('Could not save progress:', e);
+      }
+    }
+
+    function loadProgress(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return;
+        const data = JSON.parse(raw);
+
+        if(Array.isArray(data.completed) && data.completed.length === modules.length){
+          completed = data.completed.map(Boolean);
+        }
+        if(typeof data.introFinished === 'boolean'){
+          introFinished = data.introFinished;
+        }
+        if(typeof data.learnerName === 'string'){
+          const input = $('learnerName');
+          if(input) input.value = data.learnerName;
+        }
+      }catch(e){
+        console.warn('Could not load progress:', e);
+      }
+    }
+
+    function resetProgress(){
+      const ok = confirm('This will reset all course progress AND learner name on this device/browser. Continue?');
+      if(!ok) return;
+
+      try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+
+      completed = Array(modules.length).fill(false);
+      currentQuiz = null;
+      introFinished = false;
+      introStarted = false;
+
+      const nameInput = $('learnerName');
+      if(nameInput) nameInput.value = '';
+
+      // Clear certificate preview state
+      clearPreview();
+
+      // Re-lock menu until intro is played
+      $('audioGate').classList.remove('hidden');
+      $('startBtn').disabled = false;
+      setGateMessage('Click Start');
+
+      // Return to menu
+      show('menu');
+      update();
+    }
+
+    /* =========================
+       UI NAVIGATION
+    ========================== */
     function stopVideo(){
       const v = $('video');
       if(!v) return;
       try{
         v.pause();
-        v.currentTime = 0; // reset to start (true "stop" behavior)
+        v.currentTime = 0;
         v.removeAttribute('src');
-        v.load(); // forces browser to release the stream/buffer
+        v.load();
       }catch(e){}
     }
 
     function show(view){
-      // If we are leaving the player screen, stop the video
       if(view !== 'player') stopVideo();
       ['menu','player','quiz','complete'].forEach(v => $(v).classList.add('hidden'));
       $(view).classList.remove('hidden');
       $('progressCard').classList.toggle('hidden', view !== 'menu');
     }
 
-    /* ===== Audio Gate ===== */
+    /* =========================
+       AUDIO GATE
+    ========================== */
     function setGateMessage(msg){
       const p = $('gateMsg');
       if(p) p.innerText = msg;
@@ -217,64 +295,74 @@
     function startIntroAudio(){
       if(introStarted) return;
       introStarted = true;
+
       const a = $('menuAudio');
       if(!a){
-        // If audio element missing, unlock anyway
         introFinished = true;
+        saveProgress();
         $('audioGate').classList.add('hidden');
         update();
         return;
       }
+
       a.src = INTRO_AUDIO;
       a.currentTime = 0;
       a.loop = false;
       a.preload = 'auto';
+
       $('startBtn').disabled = true;
       setGateMessage('Introduction .... Please wait');
+
       const playPromise = a.play();
       if(playPromise && typeof playPromise.catch === 'function'){
         playPromise.catch((err) => {
           console.error('Audio play blocked/failed:', err);
-          // Unlock training even if audio cannot play
           introFinished = true;
+          saveProgress();
           $('audioGate').classList.add('hidden');
           update();
         });
       }
+
       a.onended = () => {
         introFinished = true;
+        saveProgress();
         $('audioGate').classList.add('hidden');
         update();
       };
+
       a.onerror = () => {
-        console.error('Audio load error. Check intro.mp3 location/name.');
-        // Unlock training even if audio missing
+        console.error('Audio load error. Check Intro.mp3 location/name.');
         introFinished = true;
+        saveProgress();
         $('audioGate').classList.add('hidden');
         update();
       };
     }
 
-    /* ===== Module locking ===== */
+    /* =========================
+       MODULE LOCKING / FLOW
+    ========================== */
     function isUnlocked(i){
       if(!introFinished) return false;
       if(i === 0) return true;
       return completed[i-1] === true;
     }
 
-    /* ===== Module video ===== */
     function loadModule(i){
       if(!isUnlocked(i)) return;
+
       show('player');
       $('title').innerText = modules[i].t;
+
       const v = $('video');
       v.src = modules[i].v;
+
       const p = v.play();
       if(p && typeof p.catch === 'function') p.catch(() => {});
       v.onended = () => goQuiz(i);
     }
 
-    /* ===== Quiz ===== */
     function goQuiz(i){
       currentQuiz = i;
       show('quiz');
@@ -283,31 +371,35 @@
       $('openTabBtn').onclick = () => window.open(modules[i].q,'_blank','noopener');
     }
 
-    /* ===== Completion ===== */
     function quizDone(){
       if(currentQuiz !== null){
         completed[currentQuiz] = true;
         currentQuiz = null;
+        saveProgress();
       }
+
       const done = completed.filter(Boolean).length;
       if(done === modules.length){
         show('complete');
         return;
       }
+
       show('menu');
       update();
     }
 
-    /* ===== Progress + menu rebuild ===== */
     function update(){
       const done = completed.filter(Boolean).length;
       const total = modules.length;
       const pct = Math.round((done/total)*100);
+
       $('progressFill').style.width = pct + '%';
       $('progressPct').innerText = pct + '%';
       $('progressText').innerText = `Progress: ${done} of ${total} modules completed`;
+
       const grid = $('moduleGrid');
       grid.innerHTML = '';
+
       modules.forEach((m,i) => {
         const b = document.createElement('button');
         b.textContent = m.t + (completed[i] ? ' ✓' : '');
@@ -317,7 +409,9 @@
       });
     }
 
-    /* ===== Name-required modal ===== */
+    /* =========================
+       NAME REQUIRED MODAL
+    ========================== */
     function openNameAlert(){ $('nameAlert').classList.remove('hidden'); }
     function closeNameAlert(){
       $('nameAlert').classList.add('hidden');
@@ -325,13 +419,9 @@
       if(input) input.focus();
     }
 
-    /* =======================================================================
-       CERTIFICATE: auto-load template + insert name/date + preview + download
-       ======================================================================= */
-    let certTemplateBytes = null; // ArrayBuffer of template PDF (auto-loaded via fetch, or manual upload fallback)
-    let lastGeneratedUrl = null;  // Blob URL for preview/download
-    let lastGeneratedBlob = null;
-
+    /* =========================
+       CERTIFICATE: auto-load template + preview + download
+    ========================== */
     function setCertStatus(msg){
       const el = $('certStatus');
       if(el) el.textContent = msg;
@@ -346,7 +436,6 @@
     }
 
     function formatDateForCertificate(){
-      // Output format: "14 March 2026"
       const dt = new Date();
       return new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'long', year:'numeric' }).format(dt);
     }
@@ -357,16 +446,17 @@
         lastGeneratedUrl = null;
       }
       lastGeneratedBlob = null;
+
       const frame = $('certPreviewFrame');
       if(frame) frame.src = 'about:blank';
+
       const dl = $('downloadCertBtn');
       if(dl) dl.disabled = true;
     }
 
-    /* ===== Auto-load Certificate Template from same folder as current HTML ===== */
     async function loadTemplateFromServer(){
       try{
-        // Build URL relative to the current page (robust on GitHub Pages project URLs)
+        // Robust "same folder as current HTML" resolution
         const templateUrl = new URL(CERT_TEMPLATE_FILENAME, window.location.href).href;
 
         setCertStatus('Template: loading automatically...');
@@ -389,13 +479,13 @@
       }
     }
 
-    /* ===== Manual upload fallback (only used if auto-load fails) ===== */
-    function initCertificateTemplate(){
+    function initCertificateTemplateFallback(){
       const up = $('certTemplateUpload');
       if(up){
         up.addEventListener('change', () => {
           const file = up.files && up.files[0];
           if(!file) return;
+
           const fr = new FileReader();
           fr.onerror = () => alert('Unable to read the uploaded certificate PDF.');
           fr.onload = () => {
@@ -405,42 +495,50 @@
           };
           fr.readAsArrayBuffer(file);
         });
+
         setCertStatus(`Template: please upload ${CERT_TEMPLATE_FILENAME} to generate the certificate.`);
       }
     }
 
-    // ===== Placement coordinates (PDF points from bottom-left on A4) =====
-    const CERT_NAME_Y = 485; // Name baseline (centered)
-    const CERT_DATE_X = 360; // Date near signature
+    // Placement coordinates (PDF points from bottom-left)
+    const CERT_NAME_Y = 485;
+    const CERT_DATE_X = 360;
     const CERT_DATE_Y = 300;
 
     async function buildCertificateBytes(name, dateStr){
       const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
+
       if(!certTemplateBytes){
         alert(`No certificate template loaded. Ensure ${CERT_TEMPLATE_FILENAME} is next to the HTML, or upload it.`);
         return null;
       }
+
       const safeName = (name || '').replace(/\s+/g,' ').trim();
+
       const pdfDoc = await PDFDocument.load(certTemplateBytes);
       const page = pdfDoc.getPages()[0];
       const { width } = page.getSize();
+
       const nameFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       const dateFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-      // Name centered on line
+      // Center name
       const nameSize = 26;
       const nameWidth = nameFont.widthOfTextAtSize(safeName, nameSize);
       const nameX = Math.max(36, (width - nameWidth)/2);
+
       page.drawText(safeName, {
         x: nameX, y: CERT_NAME_Y,
-        size: nameSize, font: nameFont,
+        size: nameSize,
+        font: nameFont,
         color: rgb(0,0,0)
       });
 
-      // Date near signature line (always today)
+      // Date
       page.drawText(dateStr, {
         x: CERT_DATE_X, y: CERT_DATE_Y,
-        size: 12, font: dateFont,
+        size: 12,
+        font: dateFont,
         color: rgb(0,0,0)
       });
 
@@ -448,11 +546,13 @@
     }
 
     async function previewCertificate(){
-      const name = ($('learnerName')?.value || '').trim();
+      const name = getLearnerName();
       if(!name){
         openNameAlert();
         return;
       }
+      saveProgress(); // persist the name too
+
       if(!ensurePdfLibLoaded()) return;
 
       const dateStr = formatDateForCertificate();
@@ -460,14 +560,19 @@
       try{
         const bytes = await buildCertificateBytes(name, dateStr);
         if(!bytes) return;
+
         clearPreview();
+
         const blob = new Blob([bytes], { type:'application/pdf' });
         lastGeneratedBlob = blob;
         lastGeneratedUrl = URL.createObjectURL(blob);
+
         const frame = $('certPreviewFrame');
         if(frame) frame.src = lastGeneratedUrl;
+
         const dl = $('downloadCertBtn');
         if(dl) dl.disabled = false;
+
         setCertStatus('Preview generated. You can now download the certificate.');
       }catch(e){
         console.error(e);
@@ -480,7 +585,8 @@
         previewCertificate();
         return;
       }
-      const name = ($('learnerName')?.value || '').trim();
+
+      const name = getLearnerName();
       const safe = (name || 'Learner')
         .replace(/[^a-z0-9\- _]/gi,'')
         .trim()
@@ -494,28 +600,42 @@
       a.remove();
     }
 
-    /* ===== Exit (browser-safe) ===== */
     function exitCourse(){
       window.close();
       setTimeout(() => { location.replace('about:blank'); }, 100);
     }
 
-    /* ===== On load (robust wiring) ===== */
+    /* =========================
+       ON LOAD
+    ========================== */
     window.addEventListener('load', () => {
+      // Restore saved progress + learner name first
+      loadProgress();
+
       show('menu');
       update();
 
+      // Learner name persistence while typing
+      const nameInput = $('learnerName');
+      if(nameInput){
+        nameInput.addEventListener('input', saveProgress);
+      }
+
       // Auto-load certificate template from same folder as this HTML
       loadTemplateFromServer().then(ok => {
-        // Only enable manual upload if auto-load fails
-        if(!ok) initCertificateTemplate();
+        if(!ok) initCertificateTemplateFallback();
       });
 
-      // Show gate immediately (menu locked)
-      $('audioGate').classList.remove('hidden');
-      setGateMessage('Click Start');
+      // Gate logic: if intro already finished, unlock immediately
+      if(introFinished){
+        $('audioGate').classList.add('hidden');
+        update();
+      }else{
+        $('audioGate').classList.remove('hidden');
+        setGateMessage('Click Start');
+        $('startBtn').disabled = false;
+      }
 
-      // Reliable click wiring
       $('startBtn').addEventListener('click', (e) => {
         e.preventDefault();
         startIntroAudio();
@@ -525,10 +645,8 @@
 </head>
 
 <body>
-  <!-- Audio element -->
   <audio id="menuAudio" preload="auto"></audio>
 
-  <!-- Audio gate overlay -->
   <div id="audioGate">
     <div class="panel">
       <h2>Start Training</h2>
@@ -541,20 +659,25 @@
 
   <div class="container ui-scale">
 
-    <!-- Progress shown only on menu -->
     <div id="progressCard" class="card">
       <div class="progressWrap">
         <div class="progress"><div id="progressFill"></div></div>
         <div id="progressPct" class="pct">0%</div>
       </div>
+
       <div id="progressText" class="hint" style="text-align:center;margin-top:6px">
         Progress: 0 of 6 modules completed
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="secondary" onclick="resetProgress()">🔄 Reset Progress</button>
       </div>
     </div>
 
     <!-- MENU -->
     <div id="menu" class="card">
       <h2 style="text-align:center">Main Menu</h2>
+
       <div class="menuHeadingWrap">
         <div class="menuHeading hint">
           <div class="mh-line">
@@ -570,6 +693,7 @@
           </div>
         </div>
       </div>
+
       <div id="moduleGrid"></div>
     </div>
 
@@ -596,6 +720,7 @@
     <!-- COMPLETION PAGE -->
     <div id="complete" class="card hidden">
       <h2 style="text-align:center">Course Completed</h2>
+
       <p class="hint" style="font-size:14px;color:#222;max-width:820px;margin:0 auto;">
         The objective of this course was to provide you with a foundational understanding of the technical components of the ITS Integrator system and the way its various software elements interact.
         <br><br>
@@ -607,7 +732,7 @@
       <div class="row" style="margin-top:16px">
         <input id="learnerName" placeholder="Enter learner name" />
 
-        <!-- Manual upload control is kept for fallback, but will be auto-hidden if auto-load succeeds -->
+        <!-- Fallback upload UI (auto-hidden if template fetch succeeds) -->
         <label class="secondary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:8px;color:#fff;cursor:pointer">
           📄 Upload certificate PDF
           <input type="file" id="certTemplateUpload" accept="application/pdf" style="display:none">
@@ -625,6 +750,10 @@
       <div style="margin-top:12px">
         <h3 style="text-align:center;margin:0 0 10px">Certificate Preview</h3>
         <iframe id="certPreviewFrame" title="Certificate Preview"></iframe>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <button class="secondary" onclick="resetProgress()">🔄 Reset Progress</button>
       </div>
     </div>
 

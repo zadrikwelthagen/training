@@ -6,66 +6,121 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 <style>
-:root{--brand:#003366;--accent:#00B0F0;--accent2:#008cc1;--muted:#6c757d;--bg:#f4f6f8}
+:root{
+  --brand:#003366;
+  --accent:#00B0F0;
+  --accent2:#008cc1;
+  --muted:#6c757d;
+  --bg:#f4f6f8;
+}
 body{font-family:Arial,sans-serif;background:var(--bg);margin:0}
 header{background:var(--brand);color:#fff;padding:10px;text-align:center}
 header h1{margin:0;font-size:18px}
 
-.container{max-width:900px;margin:auto;min-height:calc(100vh - 60px);display:flex;flex-direction:column;gap:10px;padding:12px}
-.card{background:#fff;border-radius:12px;padding:16px;border:2px solid var(--brand)}
+.container{
+  max-width:900px;
+  margin:auto;
+  min-height:calc(100vh - 60px);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:12px;
+}
+.card{
+  background:#fff;
+  border-radius:12px;
+  padding:16px;
+  border:2px solid var(--brand);
+}
 .hidden{display:none}
 
-button{padding:12px 16px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:15px;cursor:pointer}
+button{
+  padding:12px 16px;
+  border:none;
+  border-radius:8px;
+  background:var(--accent);
+  color:#fff;
+  font-size:15px;
+  cursor:pointer;
+}
 button:hover{background:var(--accent2)}
 .secondary{background:var(--muted)}
 .danger{background:#d32f2f}
 
 .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
-.progress{height:12px;background:#dbe7f2;border-radius:999px;overflow:hidden}
-.progress div{height:100%;background:var(--accent);width:0%}
+.progress{
+  height:12px;
+  background:#dbe7f2;
+  border-radius:999px;
+  overflow:hidden;
+}
+.progress div{
+  height:100%;
+  background:var(--accent);
+  width:0%;
+}
 
-video,iframe{width:100%;border-radius:10px;border:2px solid var(--brand)}
-input{padding:10px;border-radius:6px;border:1px solid #ccc;min-width:260px}
+input{
+  padding:10px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  min-width:260px;
+}
 
 /* ===== Overlays / Modals ===== */
-#audioGate,#resetConfirmModal,#nameAlert{
-position:fixed;inset:0;background:rgba(0,0,0,.55);
-display:flex;align-items:center;justify-content:center;z-index:9999}
-.alertBox{background:#fff;border-radius:14px;padding:22px 24px;max-width:420px;text-align:center;border:2px solid #d32f2f}
-.alertIcon{font-size:42px;color:#d32f2f;margin-bottom:6px}
-.alertBox h3{margin:6px 0 8px;color:#b71c1c}
-.alertBox p{font-size:14px;color:#333}
-</style>
+#audioGate,
+#resetConfirmModal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
 
-<script src="pdf-lib.min.js"></script>
+.alertBox{
+  background:#fff;
+  border-radius:14px;
+  padding:22px 24px;
+  max-width:420px;
+  text-align:center;
+  border:2px solid #d32f2f;
+}
+.alertIcon{
+  font-size:42px;
+  color:#d32f2f;
+  margin-bottom:6px;
+}
+.alertBox h3{
+  margin:6px 0 8px;
+  color:#b71c1c;
+}
+.alertBox p{
+  font-size:14px;
+  color:#333;
+}
+</style>
 
 <script>
 /* =========================
    CONFIG
 ========================= */
 const INTRO_AUDIO = 'Intro.mp3';
-const CERT_TEMPLATE_FILENAME = 'Certificate_Adapt_IT.pdf';
-const STORAGE_KEY = 'its_integrator_training_progress_v4';
+const STORAGE_KEY = 'its_integrator_training_progress_v5';
 
 /* =========================
-   MODULES
+   MODULES (completion count)
 ========================= */
-const modules=[
- {t:'General Infrastructure',v:'ITS Integrator Basic Training_General_Infra.mp4',q:'https://forms.gle/z8jLbgVMc1QTatjU9'},
- {t:'Linux Operating System',v:'ITS Integrator Basic Training_Linux.mp4',q:'https://forms.gle/EsjTCysDnbztkPNKA'},
- {t:'Oracle Database Management System',v:'ITS Integrator Basic Training_Oracle_DBMS.mp4',q:'https://forms.gle/AkqbDQtMTP21rLA96'},
- {t:'Oracle Application Fusion Middleware',v:'ITS Integrator Basic Training_Oracle_FMW.mp4',q:'https://forms.gle/781Z5PLQdUTj6fo57'},
- {t:'ITS Integrator Application',v:'ITS Integrator Basic Training_ITS.mp4',q:'https://forms.gle/iFp1gGGfFedsGcdR8'},
- {t:'Administration',v:'ITS Integrator Basic Training_Admin.mp4',q:'https://forms.gle/7xwPe7an3LPx4Ee99'}
-];
+const modules = new Array(6).fill(0);
 
 /* =========================
    STATE
 ========================= */
 let completed = Array(modules.length).fill(false);
 let introFinished = false;
-let introStarted  = false;
+let introStarted = false;
 
 const $ = id => document.getElementById(id);
 
@@ -92,10 +147,10 @@ function loadProgress(){
 ========================= */
 function openResetConfirm(){
   const name = ($('learnerName')?.value || '').trim();
-  const display = name ? `"${name}"` : 'the learner';
+  const label = name ? `"${name}"` : 'the learner';
 
   $('resetConfirmMessage').textContent =
-    `This action will permanently reset all course progress and the learner name (${display}) on this device and browser. ` +
+    `This action will permanently reset all course progress and the learner name (${label}) on this device and browser. ` +
     `This action cannot be undone. Do you wish to continue?`;
 
   $('resetConfirmModal').classList.remove('hidden');
@@ -111,12 +166,14 @@ function confirmReset(){
   localStorage.removeItem(STORAGE_KEY);
   completed = Array(modules.length).fill(false);
   introFinished = false;
-  introStarted  = false;
+  introStarted = false;
 
   if($('learnerName')) $('learnerName').value = '';
 
   $('audioGate').classList.remove('hidden');
   $('startBtn').disabled = false;
+
+  updateResetVisibility();
 }
 
 /* =========================
@@ -145,11 +202,29 @@ function startIntroAudio(){
 }
 
 /* =========================
+   COMPLETION / RESET VISIBILITY
+========================= */
+function isCourseCompleted(){
+  return completed.every(v => v === true);
+}
+
+function updateResetVisibility(){
+  const btn = $('resetBtn');
+  if(!btn) return;
+  btn.style.display = isCourseCompleted() ? 'none' : 'inline-block';
+}
+
+/* =========================
    INIT
 ========================= */
 window.addEventListener('load', () => {
   loadProgress();
-  if(introFinished) $('audioGate').classList.add('hidden');
+
+  if(introFinished){
+    $('audioGate').classList.add('hidden');
+  }
+
+  updateResetVisibility();
 });
 </script>
 </head>
@@ -172,13 +247,15 @@ window.addEventListener('load', () => {
 
 <div class="container">
 
+  <!-- PROGRESS / RESET -->
   <div class="card">
     <div class="progress"><div id="progressFill"></div></div>
     <div class="row" style="margin-top:10px">
-      <button class="secondary" onclick="openResetConfirm()">🔄 Reset Progress</button>
+      <button id="resetBtn" class="secondary" onclick="openResetConfirm()">🔄 Reset Progress</button>
     </div>
   </div>
 
+  <!-- LEARNER NAME -->
   <div class="card">
     <input id="learnerName" placeholder="Enter learner name" oninput="saveProgress()" />
   </div>

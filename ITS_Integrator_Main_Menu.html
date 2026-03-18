@@ -1,772 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>ITS Integrator – Basic Technical Training</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <style>
-    :root{--brand:#003366;--accent:#00B0F0;--accent2:#008cc1;--muted:#6c757d;--bg:#f4f6f8;}
-    body{font-family:Arial, sans-serif;background:var(--bg);margin:0}
-
-    header{background:var(--brand);color:#fff;padding:10px;text-align:center}
-    header h1{margin:0;font-size:18px}
-
-    .container{
-      max-width:900px;
-      margin:auto;
-      min-height:calc(100vh - 60px);
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      gap:10px;
-      padding:12px;
-    }
-    .ui-scale{transform:scale(0.95);transform-origin:top center}
-
-    .card{
-      background:#fff;
-      border-radius:12px;
-      padding:16px;
-      border:2px solid var(--brand);
-      box-shadow:0 2px 10px rgba(0,0,0,.06);
-    }
-    .hidden{display:none}
-
-    button{
-      padding:12px 16px;
-      border:none;
-      border-radius:8px;
-      background:var(--accent);
-      color:#fff;
-      font-size:15px;
-      cursor:pointer;
-    }
-    button:hover{background:var(--accent2)}
-    button:disabled{background:#a9cfe0;cursor:not-allowed}
-    .secondary{background:var(--muted)}
-    .danger{background:#d32f2f}
-    .danger:hover{background:#b71c1c}
-
-    .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center}
-
-    .progressWrap{display:flex;align-items:center;gap:10px}
-    .progress{flex:1;height:12px;background:#dbe7f2;border-radius:999px;overflow:hidden}
-    .progress div{height:100%;background:var(--accent);width:0%}
-    .pct{font-weight:bold}
-    .hint{font-size:13px;color:#555;line-height:1.35}
-    .success{color:green;font-weight:bold}
-
-    #moduleGrid{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:12px}
-    #moduleGrid button{width:90%;max-width:520px}
-
-    video, iframe{
-      width:100%;
-      max-width:900px;
-      margin:auto;
-      display:block;
-      border-radius:10px;
-      border:2px solid var(--brand);
-      background:black;
-    }
-
-    #quizFrame{
-      height:40vh;
-      min-height:500px;
-      max-width:900px;
-      background:#fff;
-    }
-
-    input{
-      padding:10px;
-      border-radius:6px;
-      border:1px solid #ccc;
-      min-width:260px;
-    }
-
-    .menuHeadingWrap{
-      display:flex;
-      justify-content:center;
-      text-align:center;
-      margin:10px auto 8px;
-    }
-    .menuHeading{max-width:900px;width:100%}
-    .menuHeading .mh-line{margin:6px 0}
-    .menuHeading .mh-item{margin:2px 0}
-
-    /* ===== Audio Gate Overlay ===== */
-    #audioGate{
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,0.60);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:9999;
-    }
-    #audioGate.hidden{display:none;}
-    #audioGate .panel{
-      width:min(540px, 92vw);
-      background:#fff;
-      border:2px solid var(--brand);
-      border-radius:14px;
-      padding:18px;
-      text-align:center;
-      box-shadow:0 14px 40px rgba(0,0,0,.35);
-    }
-    #audioGate .panel h2{margin:0 0 10px;font-size:18px;color:#0f172a}
-    #audioGate .panel p{margin:0 0 14px;font-size:13px;color:#334155;line-height:1.35}
-
-    /* ===== Name-required alert modal ===== */
-    #nameAlert{
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,0.55);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:10000;
-    }
-    #nameAlert.hidden{display:none;}
-    .alertBox{
-      background:#fff;
-      border:2px solid #d32f2f;
-      border-radius:14px;
-      padding:22px 24px;
-      max-width:420px;
-      text-align:center;
-      box-shadow:0 20px 50px rgba(0,0,0,.4);
-    }
-    .alertIcon{font-size:42px;color:#d32f2f;margin-bottom:6px;}
-    .alertBox h3{margin:6px 0 8px;color:#b71c1c}
-    .alertBox p{margin:0 0 14px;font-size:14px;color:#333}
-    .alertBox button{background:#d32f2f}
-
-    /* Preview block */
-    #certPreviewFrame{
-      width:100%;
-      height:70vh;
-      min-height:520px;
-      border-radius:10px;
-      border:2px solid var(--brand);
-      background:#fff;
-    }
-  </style>
-
-  <!-- PDF certificate engine (pdf-lib). Offline-first: tries local pdf-lib.min.js, falls back to CDN. -->
-  <script
-    src="pdf-lib.min.js"
-    onerror="this.onerror=null;this.src='https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';">
-  </script>
-
-  <script>
-    /* =========================
-       CONFIG
-    ========================== */
-    const INTRO_AUDIO = 'Intro.mp3';
-    const CERT_TEMPLATE_FILENAME = 'Certificate_Adapt_IT.pdf';
-
-    /* localStorage key (versioned so you can change format later) */
-    const STORAGE_KEY = 'its_integrator_training_progress_v2';
-
-    /* ===== Modules ===== */
-    const modules = [
-      {t:'General Infrastructure',v:'ITS Integrator Basic Training_General_Infra.mp4',q:'https://forms.gle/z8jLbgVMc1QTatjU9'},
-      {t:'Linux Operating System',v:'ITS Integrator Basic Training_Linux.mp4',q:'https://forms.gle/EsjTCysDnbztkPNKA'},
-      {t:'Oracle Database Management System',v:'ITS Integrator Basic Training_Oracle_DBMS.mp4',q:'https://forms.gle/AkqbDQtMTP21rLA96'},
-      {t:'Oracle Application Fusion Middleware',v:'ITS Integrator Basic Training_Oracle_FMW.mp4',q:'https://forms.gle/781Z5PLQdUTj6fo57'},
-      {t:'ITS Integrator Application',v:'ITS Integrator Basic Training_ITS.mp4',q:'https://forms.gle/iFp1gGGfFedsGcdR8'},
-      {t:'Administration',v:'ITS Integrator Basic Training_Admin.mp4',q:'https://forms.gle/7xwPe7an3LPx4Ee99'}
-    ];
-
-    /* =========================
-       STATE
-    ========================== */
-    let completed = Array(modules.length).fill(false);
-    let currentQuiz = null;
-
-    let introFinished = false;
-    let introStarted  = false;
-
-    /* Certificate state */
-    let certTemplateBytes = null;
-    let lastGeneratedUrl  = null;
-    let lastGeneratedBlob = null;
-
-    const $ = id => document.getElementById(id);
-
-    /* =========================
-       PERSISTENCE (progress + learner name)
-    ========================== */
-    function getLearnerName(){
-      return ($('learnerName')?.value || '').trim();
-    }
-
-    function saveProgress(){
-      try{
-        const data = {
-          completed,
-          introFinished,
-          learnerName: getLearnerName()
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      }catch(e){
-        console.warn('Could not save progress:', e);
-      }
-    }
-
-    function loadProgress(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(!raw) return;
-        const data = JSON.parse(raw);
-
-        if(Array.isArray(data.completed) && data.completed.length === modules.length){
-          completed = data.completed.map(Boolean);
-        }
-        if(typeof data.introFinished === 'boolean'){
-          introFinished = data.introFinished;
-        }
-        if(typeof data.learnerName === 'string'){
-          const input = $('learnerName');
-          if(input) input.value = data.learnerName;
-        }
-      }catch(e){
-        console.warn('Could not load progress:', e);
-      }
-    }
-
-    function resetProgress(){
-      const ok = confirm('This will reset all course progress AND learner name on this device/browser. Continue?');
-      if(!ok) return;
-
-      try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
-
-      completed = Array(modules.length).fill(false);
-      currentQuiz = null;
-      introFinished = false;
-      introStarted = false;
-
-      const nameInput = $('learnerName');
-      if(nameInput) nameInput.value = '';
-
-      // Clear certificate preview state
-      clearPreview();
-
-      // Re-lock menu until intro is played
-      $('audioGate').classList.remove('hidden');
-      $('startBtn').disabled = false;
-      setGateMessage('Click Start');
-
-      // Return to menu
-      show('menu');
-      update();
-    }
-
-    /* =========================
-       UI NAVIGATION
-    ========================== */
-    function stopVideo(){
-      const v = $('video');
-      if(!v) return;
-      try{
-        v.pause();
-        v.currentTime = 0;
-        v.removeAttribute('src');
-        v.load();
-      }catch(e){}
-    }
-
-    function show(view){
-      if(view !== 'player') stopVideo();
-      ['menu','player','quiz','complete'].forEach(v => $(v).classList.add('hidden'));
-      $(view).classList.remove('hidden');
-      $('progressCard').classList.toggle('hidden', view !== 'menu');
-    }
-
-    /* =========================
-       AUDIO GATE
-    ========================== */
-    function setGateMessage(msg){
-      const p = $('gateMsg');
-      if(p) p.innerText = msg;
-    }
-
-    function startIntroAudio(){
-      if(introStarted) return;
-      introStarted = true;
-
-      const a = $('menuAudio');
-      if(!a){
-        introFinished = true;
-        saveProgress();
-        $('audioGate').classList.add('hidden');
-        update();
-        return;
-      }
-
-      a.src = INTRO_AUDIO;
-      a.currentTime = 0;
-      a.loop = false;
-      a.preload = 'auto';
-
-      $('startBtn').disabled = true;
-      setGateMessage('Introduction .... Please wait');
-
-      const playPromise = a.play();
-      if(playPromise && typeof playPromise.catch === 'function'){
-        playPromise.catch((err) => {
-          console.error('Audio play blocked/failed:', err);
-          introFinished = true;
-          saveProgress();
-          $('audioGate').classList.add('hidden');
-          update();
-        });
-      }
-
-      a.onended = () => {
-        introFinished = true;
-        saveProgress();
-        $('audioGate').classList.add('hidden');
-        update();
-      };
-
-      a.onerror = () => {
-        console.error('Audio load error. Check Intro.mp3 location/name.');
-        introFinished = true;
-        saveProgress();
-        $('audioGate').classList.add('hidden');
-        update();
-      };
-    }
-
-    /* =========================
-       MODULE LOCKING / FLOW
-    ========================== */
-    function isUnlocked(i){
-      if(!introFinished) return false;
-      if(i === 0) return true;
-      return completed[i-1] === true;
-    }
-
-    function loadModule(i){
-      if(!isUnlocked(i)) return;
-
-      show('player');
-      $('title').innerText = modules[i].t;
-
-      const v = $('video');
-      v.src = modules[i].v;
-
-      const p = v.play();
-      if(p && typeof p.catch === 'function') p.catch(() => {});
-      v.onended = () => goQuiz(i);
-    }
-
-    function goQuiz(i){
-      currentQuiz = i;
-      show('quiz');
-      $('quizFrame').src = modules[i].q;
-      $('quizTitle').innerText = modules[i].t + ' – Quiz';
-      $('openTabBtn').onclick = () => window.open(modules[i].q,'_blank','noopener');
-    }
-
-    function quizDone(){
-      if(currentQuiz !== null){
-        completed[currentQuiz] = true;
-        currentQuiz = null;
-        saveProgress();
-      }
-
-      const done = completed.filter(Boolean).length;
-      if(done === modules.length){
-        show('complete');
-        return;
-      }
-
-      show('menu');
-      update();
-    }
-
-    function update(){
-      const done = completed.filter(Boolean).length;
-      const total = modules.length;
-      const pct = Math.round((done/total)*100);
-
-      $('progressFill').style.width = pct + '%';
-      $('progressPct').innerText = pct + '%';
-      $('progressText').innerText = `Progress: ${done} of ${total} modules completed`;
-
-      const grid = $('moduleGrid');
-      grid.innerHTML = '';
-
-      modules.forEach((m,i) => {
-        const b = document.createElement('button');
-        b.textContent = m.t + (completed[i] ? ' ✓' : '');
-        b.disabled = !isUnlocked(i);
-        b.onclick = () => loadModule(i);
-        grid.appendChild(b);
-      });
-    }
-
-    /* =========================
-       NAME REQUIRED MODAL
-    ========================== */
-    function openNameAlert(){ $('nameAlert').classList.remove('hidden'); }
-    function closeNameAlert(){
-      $('nameAlert').classList.add('hidden');
-      const input = $('learnerName');
-      if(input) input.focus();
-    }
-
-    /* =========================
-       CERTIFICATE: auto-load template + preview + download
-    ========================== */
-    function setCertStatus(msg){
-      const el = $('certStatus');
-      if(el) el.textContent = msg;
-    }
-
-    function ensurePdfLibLoaded(){
-      if(!window.PDFLib){
-        alert('PDF engine not loaded. Place pdf-lib.min.js in the same folder as this HTML (recommended for offline), or allow the CDN fallback.');
-        return false;
-      }
-      return true;
-    }
-
-    function formatDateForCertificate(){
-      const dt = new Date();
-      return new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'long', year:'numeric' }).format(dt);
-    }
-
-    function clearPreview(){
-      if(lastGeneratedUrl){
-        URL.revokeObjectURL(lastGeneratedUrl);
-        lastGeneratedUrl = null;
-      }
-      lastGeneratedBlob = null;
-
-      const frame = $('certPreviewFrame');
-      if(frame) frame.src = 'about:blank';
-
-      const dl = $('downloadCertBtn');
-      if(dl) dl.disabled = true;
-    }
-
-    async function loadTemplateFromServer(){
-      try{
-        // Robust "same folder as current HTML" resolution
-        const templateUrl = new URL(CERT_TEMPLATE_FILENAME, window.location.href).href;
-
-        setCertStatus('Template: loading automatically...');
-        const res = await fetch(templateUrl, { cache: 'no-store' });
-        if(!res.ok) throw new Error(`Template not found (${res.status})`);
-
-        certTemplateBytes = await res.arrayBuffer();
-        setCertStatus(`Template: loaded automatically (${CERT_TEMPLATE_FILENAME})`);
-        clearPreview();
-
-        // Hide manual upload UI (optional)
-        const input = $('certTemplateUpload');
-        if(input && input.parentElement) input.parentElement.style.display = 'none';
-
-        return true;
-      }catch(e){
-        console.warn('Auto-load template failed:', e);
-        setCertStatus(`Template: auto-load failed. Please upload ${CERT_TEMPLATE_FILENAME} manually.`);
-        return false;
-      }
-    }
-
-    function initCertificateTemplateFallback(){
-      const up = $('certTemplateUpload');
-      if(up){
-        up.addEventListener('change', () => {
-          const file = up.files && up.files[0];
-          if(!file) return;
-
-          const fr = new FileReader();
-          fr.onerror = () => alert('Unable to read the uploaded certificate PDF.');
-          fr.onload = () => {
-            certTemplateBytes = fr.result;
-            setCertStatus('Template: uploaded ' + file.name);
-            clearPreview();
-          };
-          fr.readAsArrayBuffer(file);
-        });
-
-        setCertStatus(`Template: please upload ${CERT_TEMPLATE_FILENAME} to generate the certificate.`);
-      }
-    }
-
-    // Placement coordinates (PDF points from bottom-left)
-    const CERT_NAME_Y = 485;
-    const CERT_DATE_X = 360;
-    const CERT_DATE_Y = 300;
-
-    async function buildCertificateBytes(name, dateStr){
-      const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
-
-      if(!certTemplateBytes){
-        alert(`No certificate template loaded. Ensure ${CERT_TEMPLATE_FILENAME} is next to the HTML, or upload it.`);
-        return null;
-      }
-
-      const safeName = (name || '').replace(/\s+/g,' ').trim();
-
-      const pdfDoc = await PDFDocument.load(certTemplateBytes);
-      const page = pdfDoc.getPages()[0];
-      const { width } = page.getSize();
-
-      const nameFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-      const dateFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
-      // Center name
-      const nameSize = 26;
-      const nameWidth = nameFont.widthOfTextAtSize(safeName, nameSize);
-      const nameX = Math.max(36, (width - nameWidth)/2);
-
-      page.drawText(safeName, {
-        x: nameX, y: CERT_NAME_Y,
-        size: nameSize,
-        font: nameFont,
-        color: rgb(0,0,0)
-      });
-
-      // Date
-      page.drawText(dateStr, {
-        x: CERT_DATE_X, y: CERT_DATE_Y,
-        size: 12,
-        font: dateFont,
-        color: rgb(0,0,0)
-      });
-
-      return await pdfDoc.save();
-    }
-
-    async function previewCertificate(){
-      const name = getLearnerName();
-      if(!name){
-        openNameAlert();
-        return;
-      }
-      saveProgress(); // persist the name too
-
-      if(!ensurePdfLibLoaded()) return;
-
-      const dateStr = formatDateForCertificate();
-
-      try{
-        const bytes = await buildCertificateBytes(name, dateStr);
-        if(!bytes) return;
-
-        clearPreview();
-
-        const blob = new Blob([bytes], { type:'application/pdf' });
-        lastGeneratedBlob = blob;
-        lastGeneratedUrl = URL.createObjectURL(blob);
-
-        const frame = $('certPreviewFrame');
-        if(frame) frame.src = lastGeneratedUrl;
-
-        const dl = $('downloadCertBtn');
-        if(dl) dl.disabled = false;
-
-        setCertStatus('Preview generated. You can now download the certificate.');
-      }catch(e){
-        console.error(e);
-        alert('Could not generate the certificate preview.');
-      }
-    }
-
-    function downloadCertificate(){
-      if(!lastGeneratedBlob || !lastGeneratedUrl){
-        previewCertificate();
-        return;
-      }
-
-      const name = getLearnerName();
-      const safe = (name || 'Learner')
-        .replace(/[^a-z0-9\- _]/gi,'')
-        .trim()
-        .replace(/\s+/g,'_');
-
-      const a = document.createElement('a');
-      a.href = lastGeneratedUrl;
-      a.download = `ITS_Integrator_Certificate_${safe}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-
-    function exitCourse(){
-      window.close();
-      setTimeout(() => { location.replace('about:blank'); }, 100);
-    }
-
-    /* =========================
-       ON LOAD
-    ========================== */
-    window.addEventListener('load', () => {
-      // Restore saved progress + learner name first
-      loadProgress();
-
-      show('menu');
-      update();
-
-      // Learner name persistence while typing
-      const nameInput = $('learnerName');
-      if(nameInput){
-        nameInput.addEventListener('input', saveProgress);
-      }
-
-      // Auto-load certificate template from same folder as this HTML
-      loadTemplateFromServer().then(ok => {
-        if(!ok) initCertificateTemplateFallback();
-      });
-
-      // Gate logic: if intro already finished, unlock immediately
-      if(introFinished){
-        $('audioGate').classList.add('hidden');
-        update();
-      }else{
-        $('audioGate').classList.remove('hidden');
-        setGateMessage('Click Start');
-        $('startBtn').disabled = false;
-      }
-
-      $('startBtn').addEventListener('click', (e) => {
-        e.preventDefault();
-        startIntroAudio();
-      });
-    });
-  </script>
+<meta charset="UTF-8" />
+<title>ITS Integrator – Basic Technical Training</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+:root{--brand:#003366;--accent:#00B0F0;--accent2:#008cc1;--muted:#6c757d;--bg:#f4f6f8}
+body{font-family:Arial,sans-serif;background:var(--bg);margin:0}
+header{background:var(--brand);color:#fff;padding:10px;text-align:center}
+header h1{margin:0;font-size:18px}
+
+.container{max-width:900px;margin:auto;min-height:calc(100vh - 60px);display:flex;flex-direction:column;gap:10px;padding:12px}
+.card{background:#fff;border-radius:12px;padding:16px;border:2px solid var(--brand)}
+.hidden{display:none}
+
+button{padding:12px 16px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:15px;cursor:pointer}
+button:hover{background:var(--accent2)}
+.secondary{background:var(--muted)}
+.danger{background:#d32f2f}
+
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+.progress{height:12px;background:#dbe7f2;border-radius:999px;overflow:hidden}
+.progress div{height:100%;background:var(--accent);width:0%}
+
+video,iframe{width:100%;border-radius:10px;border:2px solid var(--brand)}
+input{padding:10px;border-radius:6px;border:1px solid #ccc;min-width:260px}
+
+/* ===== Overlays ===== */
+#audioGate,#resetConfirmModal,#nameAlert{
+position:fixed;inset:0;background:rgba(0,0,0,.55);
+display:flex;align-items:center;justify-content:center;z-index:9999}
+.alertBox{background:#fff;border-radius:14px;padding:22px 24px;max-width:420px;text-align:center;border:2px solid #d32f2f}
+.alertIcon{font-size:42px;color:#d32f2f;margin-bottom:6px}
+.alertBox h3{margin:6px 0 8px;color:#b71c1c}
+</style>
+
+<script src="pdf-lib.min.js"></script>
+
+<script>
+const INTRO_AUDIO = 'Intro.mp3';
+const CERT_TEMPLATE_FILENAME = 'Certificate_Adapt_IT.pdf';
+const STORAGE_KEY = 'its_integrator_training_progress_v3';
+
+const modules=[
+{t:'General Infrastructure',v:'ITS Integrator Basic Training_General_Infra.mp4',q:'https://forms.gle/z8jLbgVMc1QTatjU9'},
+{t:'Linux Operating System',v:'ITS Integrator Basic Training_Linux.mp4',q:'https://forms.gle/EsjTCysDnbztkPNKA'},
+{t:'Oracle Database Management System',v:'ITS Integrator Basic Training_Oracle_DBMS.mp4',q:'https://forms.gle/AkqbDQtMTP21rLA96'},
+{t:'Oracle Application Fusion Middleware',v:'ITS Integrator Basic Training_Oracle_FMW.mp4',q:'https://forms.gle/781Z5PLQdUTj6fo57'},
+{t:'ITS Integrator Application',v:'ITS Integrator Basic Training_ITS.mp4',q:'https://forms.gle/iFp1gGGfFedsGcdR8'},
+{t:'Administration',v:'ITS Integrator Basic Training_Admin.mp4',q:'https://forms.gle/7xwPe7an3LPx4Ee99'}
+];
+
+let completed=Array(modules.length).fill(false);
+let introFinished=false;
+let introStarted=false;
+
+const $=id=>document.getElementById(id);
+
+/* ===== Persistence ===== */
+function saveProgress(){
+localStorage.setItem(STORAGE_KEY,JSON.stringify({
+completed,
+introFinished,
+learnerName:$('learnerName')?.value||''
+}));
+}
+
+function loadProgress(){
+const d=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+if(Array.isArray(d.completed)) completed=d.completed;
+if(typeof d.introFinished==='boolean') introFinished=d.introFinished;
+if(d.learnerName && $('learnerName')) $('learnerName').value=d.learnerName;
+}
+
+/* ===== Reset Modal ===== */
+function openResetConfirm(){
+const name=($('learnerName')?.value||'').trim();
+const label=name?`"${name}"`:'the learner';
+$('resetConfirmMessage').textContent=
+`This action will permanently reset all course progress and the learner name (${label}) on this device and browser. This action cannot be undone. Do you wish to continue?`;
+$('resetConfirmModal').classList.remove('hidden');
+}
+function closeResetConfirm(){
+$('resetConfirmModal').classList.add('hidden');
+}
+function confirmReset(){
+closeResetConfirm();
+localStorage.removeItem(STORAGE_KEY);
+completed=Array(modules.length).fill(false);
+introFinished=false;
+introStarted=false;
+if($('learnerName')) $('learnerName').value='';
+$('audioGate').classList.remove('hidden');
+}
+
+/* ===== Audio Gate ===== */
+function startIntroAudio(){
+if(introStarted) return;
+introStarted=true;
+const a=$('menuAudio');
+a.src=INTRO_AUDIO;
+a.muted=false;
+a.volume=1.0;
+a.play().then(()=>{
+a.onended=()=>{introFinished=true;saveProgress();$('audioGate').classList.add('hidden');};
+}).catch(()=>{
+introFinished=true;
+saveProgress();
+$('audioGate').classList.add('hidden');
+});
+}
+
+window.addEventListener('load',()=>{
+loadProgress();
+if(introFinished) $('audioGate').classList.add('hidden');
+});
+</script>
 </head>
 
 <body>
-  <audio id="menuAudio" preload="auto"></audio>
 
-  <div id="audioGate">
-    <div class="panel">
-      <h2>Start Training</h2>
-      <p id="gateMsg">Click Start</p>
-      <button id="startBtn">▶ Start</button>
+<audio id="menuAudio"></audio>
+
+<div id="audioGate">
+  <div class="alertBox">
+    <h3>Start Training</h3>
+    <button onclick="startIntroAudio()">▶ Start</button>
+  </div>
+</div>
+
+<header><h1>ITS Integrator – Basic Technical Overview</h1></header>
+
+<div class="container">
+
+  <div class="card">
+    <div class="progress"><div id="progressFill"></div></div>
+    <div class="row" style="margin-top:10px">
+      <button class="secondary" onclick="openResetConfirm()">🔄 Reset Progress</button>
     </div>
   </div>
 
-  <header><h1>ITS Integrator – Basic Technical Overview</h1></header>
-
-  <div class="container ui-scale">
-
-    <div id="progressCard" class="card">
-      <div class="progressWrap">
-        <div class="progress"><div id="progressFill"></div></div>
-        <div id="progressPct" class="pct">0%</div>
-      </div>
-
-      <div id="progressText" class="hint" style="text-align:center;margin-top:6px">
-        Progress: 0 of 6 modules completed
-      </div>
-
-      <div class="row" style="margin-top:10px">
-        <button class="secondary" onclick="resetProgress()">🔄 Reset Progress</button>
-      </div>
-    </div>
-
-    <!-- MENU -->
-    <div id="menu" class="card">
-      <h2 style="text-align:center">Main Menu</h2>
-
-      <div class="menuHeadingWrap">
-        <div class="menuHeading hint">
-          <div class="mh-line">
-            This course provides a basic technical overview of the ITS Integrator, covering its modular infrastructure, including:
-          </div>
-          <div class="mh-item">Linux Operating System</div>
-          <div class="mh-item">Oracle Database Management System</div>
-          <div class="mh-item">Oracle Application Fusion Middleware</div>
-          <div class="mh-item">ITS Integrator Application</div>
-          <div class="mh-item">Administration</div>
-          <div class="mh-line" style="margin-top:10px;">
-            Each module includes a quiz for knowledge assessment
-          </div>
-        </div>
-      </div>
-
-      <div id="moduleGrid"></div>
-    </div>
-
-    <!-- PLAYER -->
-    <div id="player" class="card hidden">
-      <h2 id="title" style="text-align:center"></h2>
-      <video id="video" controls></video>
-      <div class="row" style="margin-top:12px">
-        <button class="secondary" onclick="show('menu')">🏠 Home</button>
-      </div>
-    </div>
-
-    <!-- QUIZ -->
-    <div id="quiz" class="card hidden">
-      <h2 id="quizTitle" style="text-align:center"></h2>
-      <iframe id="quizFrame"></iframe>
-      <div class="row" style="margin-top:12px">
-        <button id="openTabBtn">🔗 Open in new tab (optional)</button>
-        <button onclick="quizDone()">✅ Done to complete module</button>
-        <button class="secondary" onclick="show('menu')">🏠 Home</button>
-      </div>
-    </div>
-
-    <!-- COMPLETION PAGE -->
-    <div id="complete" class="card hidden">
-      <h2 style="text-align:center">Course Completed</h2>
-
-      <p class="hint" style="font-size:14px;color:#222;max-width:820px;margin:0 auto;">
-        The objective of this course was to provide you with a foundational understanding of the technical components of the ITS Integrator system and the way its various software elements interact.
-        <br><br>
-        By now, you should possess a more comprehensive grasp of the technical terminology of the ITS Integrator system, which will aid you in effectively comprehending and supporting the platform.
-        <br><br>
-        For any additional information or technical assistance related to your environment, please reach out to Adapt IT Education Technical Services.
-      </p>
-
-      <div class="row" style="margin-top:16px">
-        <input id="learnerName" placeholder="Enter learner name" />
-
-        <!-- Fallback upload UI (auto-hidden if template fetch succeeds) -->
-        <label class="secondary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:8px;color:#fff;cursor:pointer">
-          📄 Upload certificate PDF
-          <input type="file" id="certTemplateUpload" accept="application/pdf" style="display:none">
-        </label>
-
-        <button id="previewCertBtn" onclick="previewCertificate()">👁 Preview Certificate</button>
-        <button id="downloadCertBtn" onclick="downloadCertificate()" disabled>⬇ Download Certificate</button>
-        <button class="secondary" onclick="exitCourse()">🚪 Exit</button>
-      </div>
-
-      <div id="certStatus" class="hint" style="text-align:center;margin-top:10px">
-        Template: loading…
-      </div>
-
-      <div style="margin-top:12px">
-        <h3 style="text-align:center;margin:0 0 10px">Certificate Preview</h3>
-        <iframe id="certPreviewFrame" title="Certificate Preview"></iframe>
-      </div>
-
-      <div class="row" style="margin-top:12px">
-        <button class="secondary" onclick="resetProgress()">🔄 Reset Progress</button>
-      </div>
-    </div>
-
+  <div class="card">
+    <input id="learnerName" placeholder="Enter learner name" oninput="saveProgress()" />
   </div>
 
-  <!-- Name required alert -->
-  <div id="nameAlert" class="hidden">
-    <div class="alertBox">
-      <div class="alertIcon">⚠</div>
-      <h3>Name Required</h3>
-      <p>The learner must enter a name before generating/downloading the certificate.</p>
-      <button onclick="closeNameAlert()">OK</button>
+</div>
+
+<!-- Reset Confirmation Modal -->
+<div id="resetConfirmModal" class="hidden">
+  <div class="alertBox">
+    <div class="alertIcon">⚠</div>
+    <h3>Confirm Reset</h3>
+    <p id="resetConfirmMessage"></p>
+    <div class="row" style="margin-top:12px">
+      <button class="danger" onclick="confirmReset()">Yes, Reset</button>
+      <button class="secondary" onclick="closeResetConfirm()">Cancel</button>
     </div>
   </div>
+</div>
+
 </body>
 </html>

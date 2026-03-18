@@ -8,9 +8,11 @@
   <style>
     :root{--brand:#003366;--accent:#00B0F0;--accent2:#008cc1;--muted:#6c757d;--bg:#f4f6f8;}
     body{font-family:Arial, sans-serif;background:var(--bg);margin:0}
+
     /* Header */
     header{background:var(--brand);color:#fff;padding:10px;text-align:center}
     header h1{margin:0;font-size:18px}
+
     /* Layout */
     .container{
       max-width:900px;
@@ -23,6 +25,7 @@
       padding:12px;
     }
     .ui-scale{transform:scale(0.95);transform-origin:top center}
+
     /* Card */
     .card{
       background:#fff;
@@ -32,6 +35,7 @@
       box-shadow:0 2px 10px rgba(0,0,0,.06);
     }
     .hidden{display:none}
+
     /* Buttons */
     button{
       padding:12px 16px;
@@ -46,33 +50,31 @@
     button:disabled{background:#a9cfe0;cursor:not-allowed}
     .secondary{background:var(--muted)}
     .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center}
+
     /* Progress */
     .progressWrap{display:flex;align-items:center;gap:10px}
     .progress{flex:1;height:12px;background:#dbe7f2;border-radius:999px;overflow:hidden}
     .progress div{height:100%;background:var(--accent);width:0%}
     .pct{font-weight:bold}
     .hint{font-size:13px;color:#555;line-height:1.35}
-    .success{color:green;font-weight:bold}
+
     /* Center menu buttons */
     #moduleGrid{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:12px}
     #moduleGrid button{width:90%;max-width:520px}
-    /* Video / iframe */
-    video, iframe{
-      width:100%;
-      max-width:900px;
-      margin:auto;
-      display:block;
-      border-radius:10px;
-      border:2px solid var(--brand);
-      background:black;
-    }
+
     /* Quiz size */
     #quizFrame{
+      width:100%;
       height:40vh;
       min-height:500px;
       max-width:900px;
+      border-radius:10px;
+      border:2px solid var(--brand);
       background:#fff;
+      display:block;
+      margin:auto;
     }
+
     /* Inputs */
     input{
       padding:10px;
@@ -80,6 +82,7 @@
       border:1px solid #ccc;
       min-width:260px;
     }
+
     /* Main Menu heading block centered */
     .menuHeadingWrap{
       display:flex;
@@ -152,20 +155,107 @@
       border:2px solid var(--brand);
       background:#fff;
     }
+
+    /* =========================
+       CUSTOM VIDEO PLAYER
+       (No native controls → no ⋯ menu)
+       ========================= */
+    .playerWrap{
+      width:100%;
+      max-width:900px;
+      margin:auto;
+    }
+
+    #video{
+      width:100%;
+      display:block;
+      border-radius:10px;
+      border:2px solid var(--brand);
+      background:black;
+    }
+
+    .controlsBar{
+      margin-top:10px;
+      background:rgba(0,0,0,0.90);
+      border-radius:10px;
+      padding:10px;
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:10px;
+      color:#fff;
+      user-select:none;
+    }
+    .controlsBar button{
+      padding:8px 10px;
+      border-radius:8px;
+      font-size:14px;
+      background:var(--accent);
+      color:#fff;
+    }
+    .controlsBar button.secondary{
+      background:#64748b;
+    }
+    .timeText{
+      font-variant-numeric: tabular-nums;
+      font-size:13px;
+      opacity:0.95;
+      min-width:110px;
+      text-align:center;
+    }
+
+    .range{
+      -webkit-appearance:none;
+      appearance:none;
+      height:6px;
+      border-radius:999px;
+      background:#334155;
+      outline:none;
+    }
+    .range::-webkit-slider-thumb{
+      -webkit-appearance:none;
+      appearance:none;
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      background:var(--accent);
+      cursor:pointer;
+      border:2px solid #ffffff;
+    }
+    .range::-moz-range-thumb{
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      background:var(--accent);
+      cursor:pointer;
+      border:2px solid #ffffff;
+    }
+
+    #seek{
+      flex:1 1 260px;
+      min-width:180px;
+    }
+
+    #volume{
+      width:120px;
+    }
+
+    .spacer{
+      flex: 0 0 8px;
+    }
   </style>
 
   <!-- PDF certificate engine (pdf-lib). Offline-first: tries local pdf-lib.min.js, falls back to CDN. -->
-  <script src="pdf-lib.min.js"
-          onerror="this.onerror=null;this.src='https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';"></script>
+  <script
+    src="pdf-lib.min.js"
+    onerror="this.onerror=null;this.src='https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';">
+  </script>
 
   <script>
     /* ===== Asset ===== */
-    const INTRO_AUDIO = 'Intro.mp3';
+    const INTRO_AUDIO = 'intro.mp3';
 
-    /* ===== Certificate Template (auto-load) =====
-       Put Certificate_Adapt_IT.pdf next to this HTML on GitHub Pages.
-       The code will automatically fetch it using the current page base URL.
-    */
+    /* ===== Certificate Template (auto-load) ===== */
     const CERT_TEMPLATE_FILENAME = 'Certificate_Adapt_IT.pdf';
 
     /* ===== Modules ===== */
@@ -198,13 +288,15 @@
       if(!v) return;
       try{
         v.pause();
-        v.currentTime = 0; // reset to start (true "stop" behavior)
+        v.currentTime = 0;
         v.removeAttribute('src');
-        v.load(); // forces browser to release the stream/buffer
+        v.load();
       }catch(e){}
+      // reset UI when stopping
+      updateCustomPlayerUI(true);
     }
+
     function show(view){
-      // If we are leaving the player screen, stop the video
       if(view !== 'player') stopVideo();
       ['menu','player','quiz','complete'].forEach(v => $(v).classList.add('hidden'));
       $(view).classList.remove('hidden');
@@ -216,12 +308,12 @@
       const p = $('gateMsg');
       if(p) p.innerText = msg;
     }
+
     function startIntroAudio(){
       if(introStarted) return;
       introStarted = true;
       const a = $('menuAudio');
       if(!a){
-        // If audio element missing, unlock anyway
         introFinished = true;
         $('audioGate').classList.add('hidden');
         update();
@@ -238,21 +330,18 @@
       if(playPromise && typeof playPromise.catch === 'function'){
         playPromise.catch((err) => {
           console.error('Audio play blocked/failed:', err);
-          // Unlock training even if audio cannot play
           introFinished = true;
           $('audioGate').classList.add('hidden');
           update();
         });
       }
-
       a.onended = () => {
         introFinished = true;
         $('audioGate').classList.add('hidden');
         update();
       };
       a.onerror = () => {
-        console.error('Audio load error. Check Intro.mp3 location/name.');
-        // Unlock training even if audio missing
+        console.error('Audio load error. Check intro.mp3 location/name.');
         introFinished = true;
         $('audioGate').classList.add('hidden');
         update();
@@ -271,11 +360,18 @@
       if(!isUnlocked(i)) return;
       show('player');
       $('title').innerText = modules[i].t;
+
       const v = $('video');
       v.src = modules[i].v;
+      v.load();
+
+      // play
       const p = v.play();
       if(p && typeof p.catch === 'function') p.catch(() => {});
       v.onended = () => goQuiz(i);
+
+      // make sure UI reflects state
+      updateCustomPlayerUI();
     }
 
     /* ===== Quiz ===== */
@@ -296,7 +392,7 @@
       const done = completed.filter(Boolean).length;
       if(done === modules.length){
         show('complete');
-        updateCertificateButtons(); // ensure buttons reflect completion
+        updateCertificateButtons();
         return;
       }
       show('menu');
@@ -308,6 +404,7 @@
       const done = completed.filter(Boolean).length;
       const total = modules.length;
       const pct = Math.round((done/total)*100);
+
       $('progressFill').style.width = pct + '%';
       $('progressPct').innerText = pct + '%';
       $('progressText').innerText = `Progress: ${done} of ${total} modules completed`;
@@ -322,7 +419,6 @@
         grid.appendChild(b);
       });
 
-      // keep certificate UI in sync with progress
       updateCertificateButtons();
     }
 
@@ -334,12 +430,186 @@
       if(input) input.focus();
     }
 
-    /* =======================================================================
-       CERTIFICATE: auto-load template + insert name/date + preview + download
-       + LOCK UNTIL 100% COMPLETE
-       ======================================================================= */
-    let certTemplateBytes = null; // ArrayBuffer of template PDF (auto-loaded via fetch, or manual upload fallback)
-    let lastGeneratedUrl = null;  // Blob URL for preview/download
+    /* =========================
+       CUSTOM VIDEO CONTROLS
+       ========================= */
+    let isSeeking = false;
+
+    function fmtTime(sec){
+      if(!isFinite(sec) || sec < 0) sec = 0;
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = Math.floor(sec % 60);
+      const mm = String(m).padStart(2,'0');
+      const ss = String(s).padStart(2,'0');
+      return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss.padStart(2,'0')}`;
+    }
+
+    function togglePlay(){
+      const v = $('video');
+      if(!v) return;
+      if(v.paused) v.play().catch(()=>{});
+      else v.pause();
+    }
+
+    function setMuted(m){
+      const v = $('video');
+      if(!v) return;
+      v.muted = m;
+      updateCustomPlayerUI();
+    }
+
+    function setVolume(val){
+      const v = $('video');
+      if(!v) return;
+      v.volume = Math.max(0, Math.min(1, val));
+      if(v.volume === 0) v.muted = true;
+      updateCustomPlayerUI();
+    }
+
+    function seekTo(t){
+      const v = $('video');
+      if(!v || !isFinite(v.duration)) return;
+      v.currentTime = Math.max(0, Math.min(v.duration, t));
+      updateCustomPlayerUI();
+    }
+
+    function toggleFullscreen(){
+      const wrap = $('playerWrap');
+      if(!wrap) return;
+
+      const doc = document;
+      if(!doc.fullscreenElement){
+        (wrap.requestFullscreen?.() || wrap.webkitRequestFullscreen?.() || wrap.msRequestFullscreen?.());
+      }else{
+        (doc.exitFullscreen?.() || doc.webkitExitFullscreen?.() || doc.msExitFullscreen?.());
+      }
+    }
+
+    function updateCustomPlayerUI(reset=false){
+      const v = $('video');
+      if(!v) return;
+
+      const playBtn = $('playBtn');
+      const muteBtn = $('muteBtn');
+      const seek = $('seek');
+      const volume = $('volume');
+      const time = $('timeText');
+
+      if(reset){
+        if(playBtn) playBtn.textContent = '▶ Play';
+        if(muteBtn) muteBtn.textContent = '🔊';
+        if(seek){ seek.value = 0; seek.max = 0; }
+        if(volume) volume.value = 1;
+        if(time) time.textContent = '0:00 / 0:00';
+        return;
+      }
+
+      if(playBtn) playBtn.textContent = v.paused ? '▶ Play' : '⏸ Pause';
+
+      if(muteBtn) muteBtn.textContent = (v.muted || v.volume === 0) ? '🔇' : '🔊';
+
+      if(volume && !document.activeElement?.matches('#volume')){
+        volume.value = (v.muted ? 0 : v.volume);
+      }
+
+      const dur = isFinite(v.duration) ? v.duration : 0;
+      const cur = isFinite(v.currentTime) ? v.currentTime : 0;
+
+      if(seek){
+        seek.max = dur || 0;
+        if(!isSeeking) seek.value = cur || 0;
+      }
+
+      if(time) time.textContent = `${fmtTime(cur)} / ${fmtTime(dur)}`;
+    }
+
+    function initCustomPlayer(){
+      const v = $('video');
+      if(!v) return;
+
+      // remove native controls & disable PiP
+      v.controls = false;
+      v.setAttribute('playsinline','');
+      v.setAttribute('disablepictureinpicture','');
+
+      // reduce obvious right-click menu (not a security feature)
+      v.addEventListener('contextmenu', (e)=>e.preventDefault());
+
+      // basic click-to-toggle
+      v.addEventListener('click', togglePlay);
+
+      // events to keep UI in sync
+      v.addEventListener('loadedmetadata', () => updateCustomPlayerUI());
+      v.addEventListener('timeupdate', () => updateCustomPlayerUI());
+      v.addEventListener('play', () => updateCustomPlayerUI());
+      v.addEventListener('pause', () => updateCustomPlayerUI());
+      v.addEventListener('volumechange', () => updateCustomPlayerUI());
+      document.addEventListener('fullscreenchange', () => updateCustomPlayerUI());
+
+      // wire controls
+      $('playBtn')?.addEventListener('click', togglePlay);
+      $('muteBtn')?.addEventListener('click', () => setMuted(!(v.muted)));
+
+      const seek = $('seek');
+      if(seek){
+        seek.addEventListener('input', () => {
+          isSeeking = true;
+          // show preview time while dragging
+          updateCustomPlayerUI();
+        });
+        seek.addEventListener('change', () => {
+          const t = parseFloat(seek.value || '0');
+          seekTo(t);
+          isSeeking = false;
+        });
+        seek.addEventListener('pointerdown', () => { isSeeking = true; });
+        seek.addEventListener('pointerup', () => {
+          const t = parseFloat(seek.value || '0');
+          seekTo(t);
+          isSeeking = false;
+        });
+      }
+
+      const vol = $('volume');
+      if(vol){
+        vol.addEventListener('input', () => {
+          const val = parseFloat(vol.value || '1');
+          setVolume(val);
+        });
+      }
+
+      $('fsBtn')?.addEventListener('click', toggleFullscreen);
+
+      // keyboard shortcuts on player screen
+      document.addEventListener('keydown', (e) => {
+        if($('player')?.classList.contains('hidden')) return;
+        if(e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+
+        if(e.code === 'Space'){
+          e.preventDefault();
+          togglePlay();
+        }else if(e.code === 'ArrowRight'){
+          const step = 5;
+          seekTo(($('video').currentTime || 0) + step);
+        }else if(e.code === 'ArrowLeft'){
+          const step = 5;
+          seekTo(($('video').currentTime || 0) - step);
+        }else if(e.code === 'KeyM'){
+          setMuted(!v.muted);
+        }else if(e.code === 'KeyF'){
+          toggleFullscreen();
+        }
+      });
+
+      updateCustomPlayerUI(true);
+    }
+
+    /* =========================
+       CERTIFICATE + LOCK (100% completion)
+       ========================= */
+    let certTemplateBytes = null;
+    let lastGeneratedUrl = null;
     let lastGeneratedBlob = null;
 
     function setCertStatus(msg){
@@ -356,7 +626,6 @@
     }
 
     function formatDateForCertificate(){
-      // Output format: "14 March 2026"
       const dt = new Date();
       return new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'long', year:'numeric' }).format(dt);
     }
@@ -373,30 +642,24 @@
       if(dl) dl.disabled = true;
     }
 
-    /* ===== NEW: Completion check ===== */
     function isCourseComplete(){
       return completed.filter(Boolean).length === modules.length;
     }
 
-    /* ===== NEW: Disable/enable certificate buttons based on completion ===== */
     function updateCertificateButtons(){
       const complete = isCourseComplete();
       const preview = $('previewCertBtn');
       const download = $('downloadCertBtn');
 
       if(preview) preview.disabled = !complete;
-
-      // download is enabled only if complete and a preview blob exists
       if(download) download.disabled = !complete || !lastGeneratedBlob;
 
       if(!complete){
-        // Keep messaging consistent if user reaches this screen somehow without full completion
         setCertStatus('Certificate locked until all modules are completed (100%).');
         clearPreview();
       }
     }
 
-    /* ===== Auto-load Certificate Template from same folder as current HTML ===== */
     async function loadTemplateFromServer(){
       try{
         const templateUrl = new URL(CERT_TEMPLATE_FILENAME, window.location.href).href;
@@ -407,7 +670,6 @@
         setCertStatus(`Template: loaded automatically (${CERT_TEMPLATE_FILENAME})`);
         clearPreview();
 
-        // Hide manual upload UI (optional)
         const input = $('certTemplateUpload');
         if(input && input.parentElement) input.parentElement.style.display = 'none';
 
@@ -419,7 +681,6 @@
       }
     }
 
-    /* ===== Manual upload fallback (only used if auto-load fails) ===== */
     function initCertificateTemplate(){
       const up = $('certTemplateUpload');
       if(up){
@@ -439,9 +700,9 @@
       }
     }
 
-    // ===== Placement coordinates (PDF points from bottom-left on A4) =====
-    const CERT_NAME_Y = 485; // Name baseline (centered)
-    const CERT_DATE_X = 360; // Date near signature
+    // Placement coordinates (PDF points from bottom-left on A4)
+    const CERT_NAME_Y = 485;
+    const CERT_DATE_X = 360;
     const CERT_DATE_Y = 300;
 
     async function buildCertificateBytes(name, dateStr){
@@ -459,35 +720,23 @@
       const nameFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       const dateFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-      // Name centered on line
       const nameSize = 26;
       const nameWidth = nameFont.widthOfTextAtSize(safeName, nameSize);
       const nameX = Math.max(36, (width - nameWidth)/2);
-      page.drawText(safeName, {
-        x: nameX, y: CERT_NAME_Y,
-        size: nameSize, font: nameFont,
-        color: rgb(0,0,0)
-      });
 
-      // Date near signature line (always today)
-      page.drawText(dateStr, {
-        x: CERT_DATE_X, y: CERT_DATE_Y,
-        size: 12, font: dateFont,
-        color: rgb(0,0,0)
-      });
+      page.drawText(safeName, { x:nameX, y:CERT_NAME_Y, size:nameSize, font:nameFont, color: rgb(0,0,0) });
+      page.drawText(dateStr, { x:CERT_DATE_X, y:CERT_DATE_Y, size:12, font:dateFont, color: rgb(0,0,0) });
 
       return await pdfDoc.save();
     }
 
-    /* ===== UPDATED: Preview gated by 100% completion ===== */
     async function previewCertificate(){
-      // HARD LOCK: only allow if 100% complete
       if(!isCourseComplete()){
         setCertStatus('Complete all modules (100%) before generating the certificate.');
         return;
       }
 
-      const name = ($('learnerName')?.value || '').trim();
+      const name = (($('learnerName')?.value) || '').trim();
       if(!name){
         openNameAlert();
         return;
@@ -507,7 +756,6 @@
         const frame = $('certPreviewFrame');
         if(frame) frame.src = lastGeneratedUrl;
 
-        // Enable download now that preview exists and course is complete
         updateCertificateButtons();
         setCertStatus('Preview generated. You can now download the certificate.');
       }catch(e){
@@ -516,9 +764,7 @@
       }
     }
 
-    /* ===== UPDATED: Download gated by 100% completion ===== */
     function downloadCertificate(){
-      // HARD LOCK: only allow if 100% complete
       if(!isCourseComplete()){
         setCertStatus('Complete all modules (100%) before downloading the certificate.');
         return;
@@ -529,7 +775,7 @@
         return;
       }
 
-      const name = ($('learnerName')?.value || '').trim();
+      const name = (($('learnerName')?.value) || '').trim();
       const safe = (name || 'Learner')
         .replace(/[^a-z0-9\- _]/gi,'')
         .trim()
@@ -549,22 +795,20 @@
       setTimeout(() => { location.replace('about:blank'); }, 100);
     }
 
-    /* ===== On load (robust wiring) ===== */
+    /* ===== On load ===== */
     window.addEventListener('load', () => {
       show('menu');
       update();
 
-      // Auto-load certificate template from same folder as this HTML
+      initCustomPlayer();
+
       loadTemplateFromServer().then(ok => {
-        // Only enable manual upload if auto-load fails
         if(!ok) initCertificateTemplate();
       });
 
-      // Show gate immediately (menu locked)
       $('audioGate').classList.remove('hidden');
       setGateMessage('Click Start');
 
-      // Reliable click wiring
       $('startBtn').addEventListener('click', (e) => {
         e.preventDefault();
         startIntroAudio();
@@ -627,7 +871,26 @@
     <!-- PLAYER -->
     <div id="player" class="card hidden">
       <h2 id="title" style="text-align:center"></h2>
-      <video id="video" controls></video>
+
+      <div id="playerWrap" class="playerWrap">
+        <!-- IMPORTANT: no native controls attribute -->
+        <video id="video"></video>
+
+        <!-- Custom Controls -->
+        <div class="controlsBar" role="group" aria-label="Video controls">
+          <button id="playBtn" type="button" aria-label="Play or pause">▶ Play</button>
+
+          <input id="seek" class="range" type="range" min="0" max="0" step="0.1" value="0" aria-label="Seek" />
+
+          <div id="timeText" class="timeText" aria-label="Time">0:00 / 0:00</div>
+
+          <button id="muteBtn" type="button" class="secondary" aria-label="Mute or unmute">🔊</button>
+          <input id="volume" class="range" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume" />
+
+          <button id="fsBtn" type="button" class="secondary" aria-label="Fullscreen">⛶</button>
+        </div>
+      </div>
+
       <div class="row" style="margin-top:12px">
         <button class="secondary" onclick="show('menu')">🏠 Home</button>
       </div>

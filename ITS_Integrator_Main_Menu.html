@@ -160,7 +160,7 @@
 
   <script>
     /* ===== Asset ===== */
-    const INTRO_AUDIO = 'intro.mp3';
+    const INTRO_AUDIO = 'Intro.mp3';
 
     /* ===== Certificate Template (auto-load) =====
        Put Certificate_Adapt_IT.pdf next to this HTML on GitHub Pages.
@@ -251,7 +251,7 @@
         update();
       };
       a.onerror = () => {
-        console.error('Audio load error. Check intro.mp3 location/name.');
+        console.error('Audio load error. Check Intro.mp3 location/name.');
         // Unlock training even if audio missing
         introFinished = true;
         $('audioGate').classList.add('hidden');

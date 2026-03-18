@@ -5,239 +5,147 @@
 <title>ITS Integrator – Basic Technical Training</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+<!-- ✅ Favicon for Project Pages -->
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+
 <style>
 :root{
   --brand:#003366;
   --accent:#00B0F0;
   --accent2:#008cc1;
   --muted:#6c757d;
+  --danger:#d32f2f;
   --bg:#f4f6f8;
 }
 body{font-family:Arial,sans-serif;background:var(--bg);margin:0}
 header{background:var(--brand);color:#fff;padding:10px;text-align:center}
 header h1{margin:0;font-size:18px}
 
-.container{
-  max-width:900px;
-  margin:auto;
-  min-height:calc(100vh - 60px);
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  padding:12px;
-}
-.card{
-  background:#fff;
-  border-radius:12px;
-  padding:16px;
-  border:2px solid var(--brand);
-}
+.container{max-width:900px;margin:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.card{background:#fff;border-radius:12px;padding:16px;border:2px solid var(--brand)}
 .hidden{display:none}
 
-button{
-  padding:12px 16px;
-  border:none;
-  border-radius:8px;
-  background:var(--accent);
-  color:#fff;
-  font-size:15px;
-  cursor:pointer;
-}
+button{padding:12px 16px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:15px;cursor:pointer}
 button:hover{background:var(--accent2)}
 .secondary{background:var(--muted)}
-.danger{background:#d32f2f}
+.danger{background:var(--danger)}
 
 .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
-.progress{
-  height:12px;
-  background:#dbe7f2;
-  border-radius:999px;
-  overflow:hidden;
-}
-.progress div{
-  height:100%;
-  background:var(--accent);
-  width:0%;
-}
+.progress{height:12px;background:#dbe7f2;border-radius:999px;overflow:hidden}
+.progress div{height:100%;background:var(--accent);width:0%}
 
-input{
-  padding:10px;
-  border-radius:6px;
-  border:1px solid #ccc;
-  min-width:260px;
-}
+input{padding:10px;border-radius:6px;border:1px solid #ccc;min-width:260px}
 
-/* ===== Overlays / Modals ===== */
-#audioGate,
-#resetConfirmModal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.55);
-  display:flex;
-  align-items:center;
-  justify-content:center;
+/* ===== Overlays ===== */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:center;
   z-index:9999;
 }
-
 .alertBox{
-  background:#fff;
-  border-radius:14px;
-  padding:22px 24px;
-  max-width:420px;
-  text-align:center;
-  border:2px solid #d32f2f;
+  background:#fff;border-radius:14px;padding:22px 24px;
+  max-width:420px;text-align:center;border:2px solid var(--danger)
 }
-.alertIcon{
-  font-size:42px;
-  color:#d32f2f;
-  margin-bottom:6px;
-}
-.alertBox h3{
-  margin:6px 0 8px;
-  color:#b71c1c;
-}
-.alertBox p{
-  font-size:14px;
-  color:#333;
-}
+.alertIcon{font-size:42px;color:var(--danger);margin-bottom:6px}
+.alertBox h3{margin:6px 0 8px;color:#b71c1c}
+.alertBox p{font-size:14px;color:#333}
 </style>
 
 <script>
-/* =========================
-   CONFIG
-========================= */
+/* ================= CONFIG ================= */
 const INTRO_AUDIO = 'Intro.mp3';
-const STORAGE_KEY = 'its_integrator_training_progress_v5';
+const STORAGE_KEY = 'its_integrator_training_safe_v1';
+const TOTAL_MODULES = 6;
 
-/* =========================
-   MODULES (completion count)
-========================= */
-const modules = new Array(6).fill(0);
-
-/* =========================
-   STATE
-========================= */
-let completed = Array(modules.length).fill(false);
+/* ================= STATE ================= */
+let completed = Array(TOTAL_MODULES).fill(false);
 let introFinished = false;
-let introStarted = false;
 
+/* ================= HELPERS ================= */
 const $ = id => document.getElementById(id);
 
-/* =========================
-   PERSISTENCE
-========================= */
-function saveProgress(){
+/* ================= FAILSAFE ESC ================= */
+window.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));
+  }
+});
+
+/* ================= STORAGE ================= */
+function saveState(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     completed,
     introFinished,
     learnerName: $('learnerName')?.value || ''
   }));
 }
-
-function loadProgress(){
-  const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-  if(Array.isArray(data.completed)) completed = data.completed;
-  if(typeof data.introFinished === 'boolean') introFinished = data.introFinished;
-  if(data.learnerName && $('learnerName')) $('learnerName').value = data.learnerName;
+function loadState(){
+  const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  if(Array.isArray(d.completed)) completed = d.completed;
+  if(typeof d.introFinished === 'boolean') introFinished = d.introFinished;
+  if(d.learnerName && $('learnerName')) $('learnerName').value = d.learnerName;
 }
 
-/* =========================
-   RESET CONFIRM MODAL
-========================= */
-function openResetConfirm(){
-  const name = ($('learnerName')?.value || '').trim();
-  const label = name ? `"${name}"` : 'the learner';
-
-  $('resetConfirmMessage').textContent =
-    `This action will permanently reset all course progress and the learner name (${label}) on this device and browser. ` +
-    `This action cannot be undone. Do you wish to continue?`;
-
-  $('resetConfirmModal').classList.remove('hidden');
-}
-
-function closeResetConfirm(){
-  $('resetConfirmModal').classList.add('hidden');
-}
-
-function confirmReset(){
-  closeResetConfirm();
-
-  localStorage.removeItem(STORAGE_KEY);
-  completed = Array(modules.length).fill(false);
-  introFinished = false;
-  introStarted = false;
-
-  if($('learnerName')) $('learnerName').value = '';
-
-  $('audioGate').classList.remove('hidden');
-  $('startBtn').disabled = false;
-
-  updateResetVisibility();
-}
-
-/* =========================
-   AUDIO GATE
-========================= */
-function startIntroAudio(){
-  if(introStarted) return;
-  introStarted = true;
-
-  const a = $('menuAudio');
+/* ================= INTRO AUDIO ================= */
+function startIntro(){
+  const a = $('introAudio');
   a.src = INTRO_AUDIO;
   a.muted = false;
-  a.volume = 1.0;
-
-  a.play().then(() => {
-    a.onended = () => {
-      introFinished = true;
-      saveProgress();
-      $('audioGate').classList.add('hidden');
-    };
-  }).catch(() => {
-    introFinished = true;
-    saveProgress();
-    $('audioGate').classList.add('hidden');
-  });
+  a.volume = 1;
+  a.play().catch(()=>finishIntro());
+  a.onended = finishIntro;
+}
+function finishIntro(){
+  introFinished = true;
+  saveState();
+  $('introGate').classList.add('hidden');
 }
 
-/* =========================
-   COMPLETION / RESET VISIBILITY
-========================= */
-function isCourseCompleted(){
-  return completed.every(v => v === true);
+/* ================= RESET MODAL ================= */
+function openReset(){
+  const name = ($('learnerName')?.value || '').trim();
+  const label = name ? `"${name}"` : 'the learner';
+  $('resetMsg').textContent =
+    `This action will permanently reset all course progress and the learner name (${label}) on this device and browser. This action cannot be undone. Do you wish to continue?`;
+  $('resetModal').classList.remove('hidden');
+}
+function confirmReset(){
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+function closeReset(){
+  $('resetModal').classList.add('hidden');
 }
 
-function updateResetVisibility(){
-  const btn = $('resetBtn');
-  if(!btn) return;
-  btn.style.display = isCourseCompleted() ? 'none' : 'inline-block';
+/* ================= COMPLETION ================= */
+function courseCompleted(){
+  return completed.every(v=>v);
+}
+function updateUI(){
+  const pct = Math.round((completed.filter(Boolean).length / TOTAL_MODULES) * 100);
+  $('progressFill').style.width = pct + '%';
+  $('resetBtn').style.display = courseCompleted() ? 'none' : 'inline-block';
 }
 
-/* =========================
-   INIT
-========================= */
-window.addEventListener('load', () => {
-  loadProgress();
-
-  if(introFinished){
-    $('audioGate').classList.add('hidden');
-  }
-
-  updateResetVisibility();
+/* ================= INIT ================= */
+window.addEventListener('load',()=>{
+  loadState();
+  if(introFinished) $('introGate').classList.add('hidden');
+  updateUI();
 });
 </script>
 </head>
 
 <body>
 
-<audio id="menuAudio"></audio>
+<audio id="introAudio"></audio>
 
-<!-- INTRO AUDIO GATE -->
-<div id="audioGate">
+<!-- INTRO GATE -->
+<div id="introGate" class="overlay">
   <div class="alertBox">
     <h3>Start Training</h3>
-    <button id="startBtn" onclick="startIntroAudio()">▶ Start</button>
+    <button onclick="startIntro()">▶ Start</button>
   </div>
 </div>
 
@@ -247,30 +155,30 @@ window.addEventListener('load', () => {
 
 <div class="container">
 
-  <!-- PROGRESS / RESET -->
+  <!-- PROGRESS -->
   <div class="card">
     <div class="progress"><div id="progressFill"></div></div>
     <div class="row" style="margin-top:10px">
-      <button id="resetBtn" class="secondary" onclick="openResetConfirm()">🔄 Reset Progress</button>
+      <button id="resetBtn" class="secondary" onclick="openReset()">🔄 Reset Progress</button>
     </div>
   </div>
 
-  <!-- LEARNER NAME -->
+  <!-- LEARNER -->
   <div class="card">
-    <input id="learnerName" placeholder="Enter learner name" oninput="saveProgress()" />
+    <input id="learnerName" placeholder="Enter learner name" oninput="saveState()" />
   </div>
 
 </div>
 
-<!-- RESET CONFIRMATION MODAL -->
-<div id="resetConfirmModal" class="hidden">
+<!-- RESET CONFIRMATION -->
+<div id="resetModal" class="overlay hidden">
   <div class="alertBox">
     <div class="alertIcon">⚠</div>
     <h3>Confirm Reset</h3>
-    <p id="resetConfirmMessage"></p>
+    <p id="resetMsg"></p>
     <div class="row" style="margin-top:12px">
       <button class="danger" onclick="confirmReset()">Yes, Reset</button>
-      <button class="secondary" onclick="closeResetConfirm()">Cancel</button>
+      <button class="secondary" onclick="closeReset()">Cancel</button>
     </div>
   </div>
 </div>

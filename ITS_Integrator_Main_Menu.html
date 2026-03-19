@@ -116,29 +116,6 @@
     }
     #audioGate .panel h2{margin:0 0 10px;font-size:18px;color:#0f172a}
     #audioGate .panel p{margin:0 0 14px;font-size:13px;color:#334155;line-height:1.35}
- /* ===== Conclusion Audio Gate (locks completion UI until Conclusion msg.mp3 ends) ===== */
- #conclusionGate{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.60);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:10001;
- }
- #conclusionGate.hidden{display:none;}
- #conclusionGate .panel{
-  width:min(540px, 92vw);
-  background:#fff;
-  border:2px solid var(--brand);
-  border-radius:14px;
-  padding:18px;
-  text-align:center;
-  box-shadow:0 14px 40px rgba(0,0,0,.35);
- }
- #conclusionGate .panel h2{margin:0 0 10px;font-size:18px;color:#0f172a}
- #conclusionGate .panel p{margin:0;font-size:13px;color:#334155;line-height:1.35}
-
 
     /* ===== Centered name-required alert modal ===== */
     #nameAlert{
@@ -266,7 +243,15 @@
     .spacer{
       flex: 0 0 8px;
     }
-  </style>
+  
+ /* ===== Conclusion Audio Gate (locks completion UI until Conclusion msg.mp3 ends) ===== */
+ #conclusionGate{position:fixed;inset:0;background:rgba(0,0,0,0.60);display:flex;align-items:center;justify-content:center;z-index:10001;}
+ #conclusionGate.hidden{display:none;}
+ #conclusionGate .panel{width:min(540px,92vw);background:#fff;border:2px solid var(--brand);border-radius:14px;padding:18px;text-align:center;box-shadow:0 14px 40px rgba(0,0,0,.35);}
+ #conclusionGate .panel h2{margin:0 0 10px;font-size:18px;color:#0f172a}
+ #conclusionGate .panel p{margin:0;font-size:13px;color:#334155;line-height:1.35}
+
+</style>
 
   <!-- PDF certificate engine (pdf-lib). Offline-first: tries local pdf-lib.min.js, falls back to CDN. -->
   <script
@@ -309,14 +294,14 @@
     /* ===== Screen switching ===== */
     function lockCompletionUI(lock){
  const actions = $('completeActions');
- if(actions) actions.classList.toggle('hidden', !!lock);
  const gate = $('conclusionGate');
+ if(actions) actions.classList.toggle('hidden', !!lock);
  if(gate) gate.classList.toggle('hidden', !lock);
  }
  let conclusionLocked = false;
  function playConclusionAudio(){
   const a = $('conclusionAudio');
-  if(!a) return;
+  if(!a) { lockCompletionUI(false); conclusionLocked=false; return; }
   conclusionLocked = true;
   lockCompletionUI(true);
   a.src = CONCLUSION_AUDIO;
@@ -329,34 +314,18 @@
   const attemptPlay = () => {
    const p = a.play();
    if(p && typeof p.catch === 'function'){
-    p.catch(()=>{
-     if(msg) msg.innerText = 'Audio is ready. Click anywhere on this message to start playback.';
-    });
+    p.catch(()=>{ if(msg) msg.innerText = 'Audio is ready. Click anywhere on this message to start playback.'; });
    }
   };
-  if(gate){
-   gate.style.cursor = 'pointer';
-   gate.addEventListener('click', attemptPlay);
-  }
-  a.onended = () => {
-   conclusionLocked = false;
-   if(gate) gate.classList.add('hidden');
-   lockCompletionUI(false);
-  };
-  a.onerror = () => {
-   // If the file is missing, unlock so the page is not stuck.
-   conclusionLocked = false;
-   if(msg) msg.innerText = 'Conclusion audio could not be loaded. Check that “Conclusion msg.mp3” is in the same folder as this HTML.';
-   if(gate) gate.classList.add('hidden');
-   lockCompletionUI(false);
-  };
+  if(gate){ gate.style.cursor='pointer'; gate.onclick = attemptPlay; }
+  a.onended = () => { conclusionLocked=false; lockCompletionUI(false); };
+  a.onerror = () => { conclusionLocked=false; lockCompletionUI(false); };
   attemptPlay();
  }
  function stopConclusionAudio(){
   const a = $('conclusionAudio');
-  if(!a) return;
-  try{ a.pause(); a.currentTime = 0; }catch(e){}
-  conclusionLocked = false;
+  if(a){ try{ a.pause(); a.currentTime=0; }catch(e){} }
+  conclusionLocked=false;
   lockCompletionUI(false);
  }
 
@@ -379,7 +348,7 @@ function stopVideo(){
       $(view).classList.remove('hidden');
       $('progressCard').classList.toggle('hidden', view !== 'menu');
     
- // conclusion background audio management
+ // conclusion lock/audio management
  if(view === 'complete'){
   lockCompletionUI(true);
   playConclusionAudio();
@@ -876,14 +845,15 @@ function stopVideo(){
 
     /* ===== Exit (browser-safe) ===== */
     function exitCourse(){
- if(typeof conclusionLocked !== 'undefined' && conclusionLocked) return;
- stopConclusionAudio();
- window.close();
+ if(conclusionLocked) return;
+ 
+      window.close();
       setTimeout(() => { location.replace('about:blank'); }, 100);
     }
 
     /* ===== On load ===== */
     window.addEventListener('load', () => {
+ window.addEventListener('beforeunload', (e)=>{ if(typeof conclusionLocked !== 'undefined' && conclusionLocked){ e.preventDefault(); e.returnValue=''; return ''; } });
       show('menu');
       update();
 
@@ -1006,7 +976,7 @@ function stopVideo(){
         For any additional information or technical assistance related to your environment, please reach out to Adapt IT Education Technical Services.
       </p>
 
-      <div id="completeActions" class="row" style="margin-top:16px">
+      <div id="completeActions" class="row hidden" style="margin-top:16px">
         <input id="learnerName" placeholder="Enter learner name" />
 
         <!-- Manual upload control is kept for fallback, but will be auto-hidden if auto-load succeeds -->

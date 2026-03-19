@@ -254,6 +254,7 @@
   <script>
     /* ===== Asset ===== */
     const INTRO_AUDIO = 'Intro.mp3';
+ const CONCLUSION_AUDIO = 'Conclusion msg.mp3';
 
     /* ===== Certificate Template (auto-load) ===== */
     const CERT_TEMPLATE_FILENAME = 'Certificate_Adapt_IT.pdf';
@@ -283,7 +284,23 @@
     const $ = id => document.getElementById(id);
 
     /* ===== Screen switching ===== */
-    function stopVideo(){
+    function playConclusionAudio(){
+ const a = $('conclusionAudio');
+ if(!a) return;
+ a.src = CONCLUSION_AUDIO;
+ a.loop = true;
+ a.preload = 'auto';
+ // play in background; some browsers require prior user gesture (Start button already provides one)
+ const p = a.play();
+ if(p && typeof p.catch === 'function') p.catch(()=>{});
+ }
+ function stopConclusionAudio(){
+ const a = $('conclusionAudio');
+ if(!a) return;
+ try{ a.pause(); a.currentTime = 0; }catch(e){}
+ }
+
+function stopVideo(){
       const v = $('video');
       if(!v) return;
       try{
@@ -301,9 +318,13 @@
       ['menu','player','quiz','complete'].forEach(v => $(v).classList.add('hidden'));
       $(view).classList.remove('hidden');
       $('progressCard').classList.toggle('hidden', view !== 'menu');
-    }
+    
+ // conclusion background audio management
+ if(view === 'complete') playConclusionAudio();
+ else stopConclusionAudio();
+}
 
-    /* ===== Audio Gate ===== */
+/* ===== Audio Gate ===== */
     function setGateMessage(msg){
       const p = $('gateMsg');
       if(p) p.innerText = msg;
@@ -820,6 +841,7 @@
 <body>
   <!-- Audio element -->
   <audio id="menuAudio" preload="auto"></audio>
+ <audio id="conclusionAudio" preload="auto"></audio>
 
   <!-- Audio gate overlay -->
   <div id="audioGate">

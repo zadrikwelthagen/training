@@ -116,6 +116,29 @@
     }
     #audioGate .panel h2{margin:0 0 10px;font-size:18px;color:#0f172a}
     #audioGate .panel p{margin:0 0 14px;font-size:13px;color:#334155;line-height:1.35}
+ /* ===== Conclusion Audio Gate (locks completion UI until Conclusion msg.mp3 ends) ===== */
+ #conclusionGate{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.60);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:10001;
+ }
+ #conclusionGate.hidden{display:none;}
+ #conclusionGate .panel{
+  width:min(540px, 92vw);
+  background:#fff;
+  border:2px solid var(--brand);
+  border-radius:14px;
+  padding:18px;
+  text-align:center;
+  box-shadow:0 14px 40px rgba(0,0,0,.35);
+ }
+ #conclusionGate .panel h2{margin:0 0 10px;font-size:18px;color:#0f172a}
+ #conclusionGate .panel p{margin:0;font-size:13px;color:#334155;line-height:1.35}
+
 
     /* ===== Centered name-required alert modal ===== */
     #nameAlert{
@@ -284,20 +307,57 @@
     const $ = id => document.getElementById(id);
 
     /* ===== Screen switching ===== */
-    function playConclusionAudio(){
- const a = $('conclusionAudio');
- if(!a) return;
- a.src = CONCLUSION_AUDIO;
- a.loop = true;
- a.preload = 'auto';
- // play in background; some browsers require prior user gesture (Start button already provides one)
- const p = a.play();
- if(p && typeof p.catch === 'function') p.catch(()=>{});
+    function lockCompletionUI(lock){
+ const actions = $('completeActions');
+ if(actions) actions.classList.toggle('hidden', !!lock);
+ const gate = $('conclusionGate');
+ if(gate) gate.classList.toggle('hidden', !lock);
+ }
+ let conclusionLocked = false;
+ function playConclusionAudio(){
+  const a = $('conclusionAudio');
+  if(!a) return;
+  conclusionLocked = true;
+  lockCompletionUI(true);
+  a.src = CONCLUSION_AUDIO;
+  a.loop = false;
+  a.preload = 'auto';
+  a.currentTime = 0;
+  const gate = $('conclusionGate');
+  const msg = $('conclusionGateMsg');
+  if(msg) msg.innerText = 'Please listen to the conclusion message…';
+  const attemptPlay = () => {
+   const p = a.play();
+   if(p && typeof p.catch === 'function'){
+    p.catch(()=>{
+     if(msg) msg.innerText = 'Audio is ready. Click anywhere on this message to start playback.';
+    });
+   }
+  };
+  if(gate){
+   gate.style.cursor = 'pointer';
+   gate.addEventListener('click', attemptPlay);
+  }
+  a.onended = () => {
+   conclusionLocked = false;
+   if(gate) gate.classList.add('hidden');
+   lockCompletionUI(false);
+  };
+  a.onerror = () => {
+   // If the file is missing, unlock so the page is not stuck.
+   conclusionLocked = false;
+   if(msg) msg.innerText = 'Conclusion audio could not be loaded. Check that “Conclusion msg.mp3” is in the same folder as this HTML.';
+   if(gate) gate.classList.add('hidden');
+   lockCompletionUI(false);
+  };
+  attemptPlay();
  }
  function stopConclusionAudio(){
- const a = $('conclusionAudio');
- if(!a) return;
- try{ a.pause(); a.currentTime = 0; }catch(e){}
+  const a = $('conclusionAudio');
+  if(!a) return;
+  try{ a.pause(); a.currentTime = 0; }catch(e){}
+  conclusionLocked = false;
+  lockCompletionUI(false);
  }
 
 function stopVideo(){
@@ -320,8 +380,12 @@ function stopVideo(){
       $('progressCard').classList.toggle('hidden', view !== 'menu');
     
  // conclusion background audio management
- if(view === 'complete') playConclusionAudio();
- else stopConclusionAudio();
+ if(view === 'complete'){
+  lockCompletionUI(true);
+  playConclusionAudio();
+ }else{
+  stopConclusionAudio();
+ }
 }
 
 /* ===== Audio Gate ===== */
@@ -812,7 +876,9 @@ function stopVideo(){
 
     /* ===== Exit (browser-safe) ===== */
     function exitCourse(){
-      window.close();
+ if(typeof conclusionLocked !== 'undefined' && conclusionLocked) return;
+ stopConclusionAudio();
+ window.close();
       setTimeout(() => { location.replace('about:blank'); }, 100);
     }
 
@@ -940,7 +1006,7 @@ function stopVideo(){
         For any additional information or technical assistance related to your environment, please reach out to Adapt IT Education Technical Services.
       </p>
 
-      <div class="row" style="margin-top:16px">
+      <div id="completeActions" class="row" style="margin-top:16px">
         <input id="learnerName" placeholder="Enter learner name" />
 
         <!-- Manual upload control is kept for fallback, but will be auto-hidden if auto-load succeeds -->

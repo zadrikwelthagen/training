@@ -277,7 +277,7 @@
 
     /* ===== Modules ===== */
     const modules = [
-      {t:'General Infrastructure',v:'ITS Integrator Basic Training_General_Infra.mp4',q:'https://forms.gle/z8jLbgVMc1QTatjU9'},
+      {t:'General Infrastructure',v:['Infra1.mp4','Infra2.mp4','Infra3.mp4','Infra4.mp4'],q:'https://forms.gle/z8jLbgVMc1QTatjU9'},
       {t:'Linux Operating System',v:'ITS Integrator Basic Training_Linux.mp4',q:'https://forms.gle/EsjTCysDnbztkPNKA'},
       {t:'Oracle Database Management System',v:'ITS Integrator Basic Training_Oracle_DBMS.mp4',q:'https://forms.gle/AkqbDQtMTP21rLA96'},
       {t:'Oracle Application Fusion Middleware',v:'ITS Integrator Basic Training_Oracle_FMW.mp4',q:'https://forms.gle/781Z5PLQdUTj6fo57'},
@@ -453,19 +453,37 @@
 
     /* ===== Module video ===== */
     function loadModule(i){
-      if(!isUnlocked(i)) return;
-      show('player');
-      $('title').innerText = modules[i].t;
-      const v = $('video');
-      v.src = modules[i].v;
-      v.load();
-      const p = v.play();
-      if(p && typeof p.catch === 'function') p.catch(() => {});
-      v.onended = () => goQuiz(i);
-      updateCustomPlayerUI();
-    }
+ if(!isUnlocked(i)) return;
+ show('player');
+ $('title').innerText = modules[i].t;
+ const v = $('video');
 
-    /* ===== Quiz ===== */
+ // Support single video (string) OR playlist (array)
+ const playlist = Array.isArray(modules[i].v) ? modules[i].v : [modules[i].v];
+ let idx = 0;
+
+ function playIndex(k){
+   idx = k;
+   v.src = playlist[idx];
+   v.load();
+   const p = v.play();
+   if(p && typeof p.catch === 'function') p.catch(() => {});
+   updateCustomPlayerUI();
+ }
+
+ // When each video ends, advance. After last, go to quiz.
+ v.onended = () => {
+   if(idx < playlist.length - 1){
+     playIndex(idx + 1);
+   }else{
+     goQuiz(i);
+   }
+ };
+
+ playIndex(0);
+}
+
+/* ===== Quiz ===== */
     function goQuiz(i){
       currentQuiz = i;
       show('quiz');

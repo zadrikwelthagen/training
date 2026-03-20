@@ -83,7 +83,6 @@
     .menuHeading{max-width:900px;width:100%}
     .menuHeading .mh-line{margin:6px 0}
     .menuHeading .mh-item{margin:2px 0}
-
     /* ===== Audio Gate Overlay (locks UI until Intro.mp3 ends) ===== */
     #audioGate{
       position:fixed;
@@ -106,7 +105,6 @@
     }
     #audioGate .panel h2{margin:0 0 10px;font-size:18px;color:#0f172a}
     #audioGate .panel p{margin:0 0 14px;font-size:13px;color:#334155;line-height:1.35}
-
     /* ===== Centered name-required alert modal ===== */
     #nameAlert{
       position:fixed;
@@ -135,7 +133,6 @@
     .alertBox h3{margin:6px 0 8px;color:#b71c1c}
     .alertBox p{margin:0 0 14px;font-size:14px;color:#333}
     .alertBox button{background:#d32f2f}
-
     /* Preview block */
     #certPreviewFrame{
       width:100%;
@@ -220,12 +217,6 @@
     #seek{
       flex:1 1 260px;
       min-width:180px;
-    }
-    #volume{
-      width:120px;
-    }
-    .spacer{
-      flex: 0 0 8px;
     }
 
     /* ===== Conclusion Audio Gate (locks completion UI until Conclusion msg.mp3 ends) ===== */
@@ -331,10 +322,8 @@
     function playConclusionAudio(){
       const a = $('conclusionAudio');
       if(!a) { lockCompletionUI(false); conclusionLocked=false; return; }
-
       conclusionLocked = true;
       lockCompletionUI(true);
-
       a.src = CONCLUSION_AUDIO;
       a.loop = false;
       a.preload = 'auto';
@@ -422,6 +411,7 @@
       a.preload = 'auto';
       $('startBtn').disabled = true;
       setGateMessage('Introduction .... Please wait');
+
       const playPromise = a.play();
       if(playPromise && typeof playPromise.catch === 'function'){
         playPromise.catch((err) => {
@@ -431,6 +421,7 @@
           update();
         });
       }
+
       a.onended = () => {
         introFinished = true;
         $('audioGate').classList.add('hidden');
@@ -451,39 +442,39 @@
       return completed[i-1] === true;
     }
 
-    /* ===== Module video ===== */
+    /* ===== Module video (playlist-capable) ===== */
     function loadModule(i){
- if(!isUnlocked(i)) return;
- show('player');
- $('title').innerText = modules[i].t;
- const v = $('video');
+      if(!isUnlocked(i)) return;
+      show('player');
+      $('title').innerText = modules[i].t;
+      const v = $('video');
 
- // Support single video (string) OR playlist (array)
- const playlist = Array.isArray(modules[i].v) ? modules[i].v : [modules[i].v];
- let idx = 0;
+      // Support single video (string) OR playlist (array)
+      const playlist = Array.isArray(modules[i].v) ? modules[i].v : [modules[i].v];
+      let idx = 0;
 
- function playIndex(k){
-   idx = k;
-   v.src = playlist[idx];
-   v.load();
-   const p = v.play();
-   if(p && typeof p.catch === 'function') p.catch(() => {});
-   updateCustomPlayerUI();
- }
+      function playIndex(k){
+        idx = k;
+        v.src = playlist[idx];
+        v.load();
+        const p = v.play();
+        if(p && typeof p.catch === 'function') p.catch(() => {});
+        updateCustomPlayerUI();
+      }
 
- // When each video ends, advance. After last, go to quiz.
- v.onended = () => {
-   if(idx < playlist.length - 1){
-     playIndex(idx + 1);
-   }else{
-     goQuiz(i);
-   }
- };
+      // When each video ends, advance. After last, go to quiz.
+      v.onended = () => {
+        if(idx < playlist.length - 1){
+          playIndex(idx + 1);
+        }else{
+          goQuiz(i);
+        }
+      };
 
- playIndex(0);
-}
+      playIndex(0);
+    }
 
-/* ===== Quiz ===== */
+    /* ===== Quiz ===== */
     function goQuiz(i){
       currentQuiz = i;
       show('quiz');
@@ -541,6 +532,7 @@
        CUSTOM VIDEO CONTROLS
        ========================= */
     let isSeeking = false;
+
     function fmtTime(sec){
       if(!isFinite(sec) || sec < 0) sec = 0;
       const h = Math.floor(sec / 3600);
@@ -550,18 +542,21 @@
       const ss = String(s).padStart(2,'0');
       return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss.padStart(2,'0')}`;
     }
+
     function togglePlay(){
       const v = $('video');
       if(!v) return;
       if(v.paused) v.play().catch(()=>{});
       else v.pause();
     }
+
     function setMuted(m){
       const v = $('video');
       if(!v) return;
       v.muted = m;
       updateCustomPlayerUI();
     }
+
     function setVolume(val){
       const v = $('video');
       if(!v) return;
@@ -569,12 +564,14 @@
       if(v.volume === 0) v.muted = true;
       updateCustomPlayerUI();
     }
+
     function seekTo(t){
       const v = $('video');
       if(!v || !isFinite(v.duration)) return;
       v.currentTime = Math.max(0, Math.min(v.duration, t));
       updateCustomPlayerUI();
     }
+
     function toggleFullscreen(){
       const wrap = $('playerWrap');
       if(!wrap) return;
@@ -585,41 +582,43 @@
         (doc.exitFullscreen?.() || doc.webkitExitFullscreen?.() || doc.msExitFullscreen?.());
       }
     }
+
     function updateCustomPlayerUI(reset=false){
       const v = $('video');
       if(!v) return;
       const playBtn = $('playBtn');
       const muteBtn = $('muteBtn');
       const seek = $('seek');
-      const volume = $('volume');
       const time = $('timeText');
+
       if(reset){
         if(playBtn) playBtn.textContent = '▶ Play';
         if(muteBtn) muteBtn.textContent = '🔊';
         if(seek){ seek.value = 0; seek.max = 0; }
-        if(volume) volume.value = 1;
         if(time) time.textContent = '0:00 / 0:00';
         return;
       }
+
       if(playBtn) playBtn.textContent = v.paused ? '▶ Play' : '⏸ Pause';
       if(muteBtn) muteBtn.textContent = (v.muted || v.volume === 0) ? '🔇' : '🔊';
-      if(volume && !document.activeElement?.matches('#volume')){
-        volume.value = (v.muted ? 0 : v.volume);
-      }
+
       const dur = isFinite(v.duration) ? v.duration : 0;
       const cur = isFinite(v.currentTime) ? v.currentTime : 0;
+
       if(seek){
         seek.max = dur || 0;
         if(!isSeeking) seek.value = cur || 0;
       }
       if(time) time.textContent = `${fmtTime(cur)} / ${fmtTime(dur)}`;
     }
+
     function initCustomPlayer(){
       const v = $('video');
       if(!v) return;
       v.controls = false;
       v.setAttribute('playsinline','');
       v.setAttribute('disablepictureinpicture','');
+
       v.addEventListener('contextmenu', (e)=>e.preventDefault());
       v.addEventListener('click', togglePlay);
       v.addEventListener('loadedmetadata', () => updateCustomPlayerUI());
@@ -648,19 +647,13 @@
         });
       }
 
-      const vol = $('volume');
-      if(vol){
-        vol.addEventListener('input', () => {
-          const val = parseFloat(vol.value || '1');
-          setVolume(val);
-        });
-      }
-
+      // NOTE: Volume slider removed from HTML. We keep mute + default volume.
       $('fsBtn')?.addEventListener('click', toggleFullscreen);
 
       document.addEventListener('keydown', (e) => {
         if($('player')?.classList.contains('hidden')) return;
         if(e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+
         if(e.code === 'Space'){
           e.preventDefault();
           togglePlay();
@@ -691,6 +684,7 @@
       const el = $('certStatus');
       if(el) el.textContent = msg;
     }
+
     function ensurePdfLibLoaded(){
       if(!window.PDFLib){
         alert('PDF engine not loaded. Place pdf-lib.min.js in the same folder as this HTML (recommended for offline), or allow the CDN fallback.');
@@ -698,10 +692,12 @@
       }
       return true;
     }
+
     function formatDateForCertificate(){
       const dt = new Date();
       return new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'long', year:'numeric' }).format(dt);
     }
+
     function clearPreview(){
       if(lastGeneratedUrl){
         URL.revokeObjectURL(lastGeneratedUrl);
@@ -713,9 +709,11 @@
       const dl = $('downloadCertBtn');
       if(dl) dl.disabled = true;
     }
+
     function isCourseComplete(){
       return completed.filter(Boolean).length === modules.length;
     }
+
     function updateCertificateButtons(){
       const complete = isCourseComplete();
       const preview = $('previewCertBtn');
@@ -784,19 +782,22 @@
       const pdfDoc = await PDFDocument.load(certTemplateBytes);
       const page = pdfDoc.getPages()[0];
       const { width } = page.getSize();
+
       const nameFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       const dateFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
       const nameSize = 26;
       const nameWidth = nameFont.widthOfTextAtSize(safeName, nameSize);
       const nameX = Math.max(36, (width - nameWidth)/2);
+
       page.drawText(safeName, { x:nameX, y:CERT_NAME_Y, size:nameSize, font:nameFont, color: rgb(0,0,0) });
       page.drawText(dateStr, { x:CERT_DATE_X, y:CERT_DATE_Y, size:12, font:dateFont, color: rgb(0,0,0) });
+
       return await pdfDoc.save();
     }
 
     async function previewCertificate(){
-      if(conclusionLocked) return; // NEW: block while locked
-
+      if(conclusionLocked) return; // block while locked
       if(!isCourseComplete()){
         setCertStatus('Complete all modules (100%) before generating the certificate.');
         return;
@@ -807,6 +808,7 @@
         return;
       }
       if(!ensurePdfLibLoaded()) return;
+
       const dateStr = formatDateForCertificate();
       try{
         const bytes = await buildCertificateBytes(name, dateStr);
@@ -826,8 +828,7 @@
     }
 
     function downloadCertificate(){
-      if(conclusionLocked) return; // NEW: block while locked
-
+      if(conclusionLocked) return; // block while locked
       if(!isCourseComplete()){
         setCertStatus('Complete all modules (100%) before downloading the certificate.');
         return;
@@ -841,6 +842,7 @@
         .replace(/[^a-z0-9\- _]/gi,'')
         .trim()
         .replace(/\s+/g,'_');
+
       const a = document.createElement('a');
       a.href = lastGeneratedUrl;
       a.download = `ITS_Integrator_Certificate_${safe}.pdf`;
@@ -898,7 +900,7 @@
     </div>
   </div>
 
-  <!-- NEW: Conclusion gate overlay (was referenced by your JS/CSS) -->
+  <!-- Conclusion gate overlay -->
   <div id="conclusionGate" class="hidden" aria-live="polite" aria-modal="true" role="dialog">
     <div class="panel">
       <h2>Course Completed</h2>
@@ -951,8 +953,11 @@
           <button id="playBtn" type="button" aria-label="Play or pause">▶ Play</button>
           <input id="seek" class="range" type="range" min="0" max="0" step="0.1" value="0" aria-label="Seek" />
           <div id="timeText" class="timeText" aria-label="Time">0:00 / 0:00</div>
+
           <button id="muteBtn" type="button" class="secondary" aria-label="Mute or unmute">🔊</button>
-          <input id="volume" class="range" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume" />
+
+          <!-- VOLUME BAR REMOVED -->
+
           <button id="fsBtn" type="button" class="secondary" aria-label="Fullscreen">⛶</button>
         </div>
       </div>
@@ -976,7 +981,6 @@
     <!-- COMPLETION PAGE -->
     <div id="complete" class="card hidden">
       <h2 style="text-align:center">Course Completed</h2>
-
       <p class="hint" style="font-size:14px;color:#222;max-width:820px;margin:0 auto;">
         The objective of this course was to provide you with a foundational understanding of the technical components of the ITS Integrator system and the way its various software elements interact.
         <br><br>
@@ -985,15 +989,13 @@
         For any additional information or technical assistance related to your environment, please reach out to Adapt IT Education Technical Services.
       </p>
 
-      <!-- UPDATED: Keep visible always; greyed-out via .locked while audio plays -->
+      <!-- Keep visible always; greyed-out via .locked while audio plays -->
       <div id="completeActions" class="row" style="margin-top:16px">
         <input id="learnerName" placeholder="Enter learner name" />
-
         <label class="secondary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:8px;color:#fff;cursor:pointer">
           📄 Upload certificate PDF
           <input type="file" id="certTemplateUpload" accept="application/pdf" style="display:none">
         </label>
-
         <button id="previewCertBtn" onclick="previewCertificate()">👁 Preview Certificate</button>
         <button id="downloadCertBtn" onclick="downloadCertificate()" disabled>⬇ Download Certificate</button>
         <button class="secondary" onclick="exitCourse()">🚪 Exit</button>
@@ -1006,10 +1008,8 @@
       <div style="margin-top:12px">
         <h3 style="text-align:center;margin:0 0 10px">Certificate Preview</h3>
 
-        <!-- UPDATED: wrapper + overlay to deactivate iframe while locked -->
         <div id="certPreviewWrap">
           <iframe id="certPreviewFrame" title="Certificate Preview"></iframe>
-
           <div id="certPreviewLock" class="hidden">
             <div style="background:#fff;border:2px solid var(--brand);border-radius:12px;
                         padding:12px 14px;max-width:520px;text-align:center;
@@ -1021,6 +1021,7 @@
             </div>
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -1034,5 +1035,6 @@
       <button onclick="closeNameAlert()">OK</button>
     </div>
   </div>
+
 </body>
 </html>

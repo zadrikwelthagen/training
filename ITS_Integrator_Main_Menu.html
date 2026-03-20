@@ -154,10 +154,13 @@
     }
     #video{
       width:100%;
+      max-height:55vh;          /* 👈 limits video height */
+              height:auto;
       display:block;
       border-radius:10px;
       border:2px solid var(--brand);
       background:black;
+     object-fit:contain;       /* keeps correct aspect ratio */
     }
     .controlsBar{
       margin-top:10px;

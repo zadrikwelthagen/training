@@ -282,7 +282,7 @@
       {t:'Oracle Database Management System',v:'ITS Integrator Basic Training_Oracle_DBMS.mp4',q:'https://forms.gle/AkqbDQtMTP21rLA96'},
       {t:'Oracle Application Fusion Middleware',v:'ITS Integrator Basic Training_Oracle_FMW.mp4',q:'https://forms.gle/781Z5PLQdUTj6fo57'},
       {t:'ITS Integrator Application',v:'ITS Integrator Basic Training_ITS.mp4',q:'https://forms.gle/iFp1gGGfFedsGcdR8'},
-      {t:'Administration',v:'ITS Integrator Basic Training_Admin.mp4',q:'https://forms.gle/7xwPe7an3LPx4Ee99'}
+      {t:'Administration',v:['Admin_intro.mp4','Admin_housekeeping.mp4','Admin_housekeeping.mp4','Admin_backup.mp4','Admin_oracle.mp4'],q:'https://forms.gle/7xwPe7an3LPx4Ee99'}
     ];
 
     /*
@@ -292,6 +292,51 @@
     */
     let completed = Array(modules.length).fill(false);
     let currentQuiz = null;
+let currentQuiz = null;
+
+/* ===== Playlist (supports single video OR an array of videos per module) ===== */
+let currentPlaylist = null;
+let playlistIndex = 0;
+let currentModuleIndex = null;
+
+function startPlaylistForModule(i){
+  currentModuleIndex = i;
+  const src = modules[i].v;
+  currentPlaylist = Array.isArray(src) ? src.slice() : [src];
+  playlistIndex = 0;
+  playPlaylistItem();
+}
+
+function playPlaylistItem(){
+  const v = $('video');
+  if(!v || !currentPlaylist) return;
+  const file = currentPlaylist[playlistIndex];
+  v.src = file;
+  v.load();
+    // reset playlist state
+    currentPlaylist = null;
+    currentModuleIndex = null;
+    playlistIndex = 0;
+  const p = v.play();
+  if(p && typeof p.catch === 'function') p.catch(() => {});
+  updateCustomPlayerUI();
+}
+
+function onPlaylistEnded(){
+  if(!currentPlaylist) return;
+  if(playlistIndex < currentPlaylist.length - 1){
+    playlistIndex++;
+    playPlaylistItem();
+    return;
+  }
+  // Playlist finished → go to quiz for this module
+  const i = currentModuleIndex;
+  currentPlaylist = null;
+  currentModuleIndex = null;
+  playlistIndex = 0;
+  goQuiz(i);
+}
+
 
     /* Audio gate state: menu locked until Intro.mp3 ends */
     let introFinished = false;
@@ -379,6 +424,10 @@
         v.currentTime = 0;
         v.removeAttribute('src');
         v.load();
+    // reset playlist state
+    currentPlaylist = null;
+    currentModuleIndex = null;
+    playlistIndex = 0;
       }catch(e){}
       // reset UI when stopping
       updateCustomPlayerUI(true);
@@ -454,17 +503,16 @@
 
     /* ===== Module video ===== */
     function loadModule(i){
-      if(!isUnlocked(i)) return;
-      show('player');
-      $('title').innerText = modules[i].t;
-      const v = $('video');
-      v.src = modules[i].v;
-      v.load();
-      const p = v.play();
-      if(p && typeof p.catch === 'function') p.catch(() => {});
-      v.onended = () => goQuiz(i);
-      updateCustomPlayerUI();
-    }
+ if(!isUnlocked(i)) return;
+ show('player');
+ $('title').innerText = modules[i].t;
+ const v = $('video');
+ // Start single video or playlist
+ startPlaylistForModule(i);
+ // Advance playlist items, then go to quiz
+ v.onended = () => onPlaylistEnded();
+ updateCustomPlayerUI();
+ }
 
     /* ===== Quiz ===== */
     function goQuiz(i){

@@ -279,10 +279,10 @@
     const modules = [
       {t:'General Infrastructure',v:'ITS Integrator Basic Training_General_Infra.mp4',q:'https://forms.gle/z8jLbgVMc1QTatjU9'},
       {t:'Linux Operating System',v:'ITS Integrator Basic Training_Linux.mp4',q:'https://forms.gle/EsjTCysDnbztkPNKA'},
-      {t:'Oracle Database Management System',v:'ITS Integrator Basic Training_Oracle_DBMS.mp4',q:'https://forms.gle/AkqbDQtMTP21rLA96'},
+      {t:'Oracle Database Management System',v:['DBMS_1.mp4','DBMS_2.mp4','DBMS_3.mp4'],q:'https://forms.gle/AkqbDQtMTP21rLA96'},
       {t:'Oracle Application Fusion Middleware',v:'ITS Integrator Basic Training_Oracle_FMW.mp4',q:'https://forms.gle/781Z5PLQdUTj6fo57'},
-      {t:'ITS Integrator Application',v:'ITS Integrator Basic Training_ITS.mp4',q:'https://forms.gle/iFp1gGGfFedsGcdR8'},
-      {t:'Administration',v:['Admin_intro.mp4','Admin_housekeeping.mp4','Admin_builds.mp4','Admin_backup.mp4','Admin_oracle.mp4'],q:'https://forms.gle/7xwPe7an3LPx4Ee99'}
+      {t:'ITS Integrator Application',v:['ITS_Linux.mp4','ITS_naming.mp4','ITS_users.mp4'],q:'https://forms.gle/iFp1gGGfFedsGcdR8'},      {t:'Administration',v:['Admin_intro.mp4','Admin_housekeeping.mp4','Admin_builds.mp4','Admin_backup.mp4','Admin_oracle.mp4'],q:'https://forms.gle/7xwPe7an3LPx4Ee99'}
+
     ];
 
     /*
@@ -292,7 +292,6 @@
     */
     let completed = Array(modules.length).fill(false);
     let currentQuiz = null;
-let currentQuiz = null;
 
 /* ===== Playlist (supports single video OR an array of videos per module) ===== */
 let currentPlaylist = null;
@@ -300,41 +299,39 @@ let playlistIndex = 0;
 let currentModuleIndex = null;
 
 function startPlaylistForModule(i){
-  currentModuleIndex = i;
-  const src = modules[i].v;
-  currentPlaylist = Array.isArray(src) ? src.slice() : [src];
-  playlistIndex = 0;
-  playPlaylistItem();
+ currentModuleIndex = i;
+ const src = modules[i].v;
+ currentPlaylist = Array.isArray(src) ? src.slice() : [src];
+ playlistIndex = 0;
+ playPlaylistItem();
 }
 
 function playPlaylistItem(){
-  const v = $('video');
-  if(!v || !currentPlaylist) return;
-  const file = currentPlaylist[playlistIndex];
-  v.src = file;
-  v.load();
-    // reset playlist state
-    currentPlaylist = null;
-    currentModuleIndex = null;
-    playlistIndex = 0;
-  const p = v.play();
-  if(p && typeof p.catch === 'function') p.catch(() => {});
-  updateCustomPlayerUI();
+ const v = $('video');
+ if(!v || !currentPlaylist) return;
+ const file = currentPlaylist[playlistIndex];
+ v.src = file;
+ v.load();
+ // ensure onended always advances playlist
+ v.onended = () => onPlaylistEnded();
+ const p = v.play();
+ if(p && typeof p.catch === 'function') p.catch(() => {});
+ updateCustomPlayerUI();
 }
 
 function onPlaylistEnded(){
-  if(!currentPlaylist) return;
-  if(playlistIndex < currentPlaylist.length - 1){
-    playlistIndex++;
-    playPlaylistItem();
-    return;
-  }
-  // Playlist finished → go to quiz for this module
-  const i = currentModuleIndex;
-  currentPlaylist = null;
-  currentModuleIndex = null;
-  playlistIndex = 0;
-  goQuiz(i);
+ if(!currentPlaylist) return;
+ if(playlistIndex < currentPlaylist.length - 1){
+  playlistIndex++;
+  playPlaylistItem();
+  return;
+ }
+ // Playlist finished → go to quiz for this module
+ const i = currentModuleIndex;
+ currentPlaylist = null;
+ currentModuleIndex = null;
+ playlistIndex = 0;
+ goQuiz(i);
 }
 
 
@@ -424,10 +421,10 @@ function onPlaylistEnded(){
         v.currentTime = 0;
         v.removeAttribute('src');
         v.load();
-    // reset playlist state
-    currentPlaylist = null;
-    currentModuleIndex = null;
-    playlistIndex = 0;
+ // reset playlist state
+ currentPlaylist = null;
+ currentModuleIndex = null;
+ playlistIndex = 0;
       }catch(e){}
       // reset UI when stopping
       updateCustomPlayerUI(true);
@@ -456,42 +453,42 @@ function onPlaylistEnded(){
     }
 
     function startIntroAudio(){
-  const a = $('menuAudio');
-  if(!a) return;
+ const a = $('menuAudio');
+ if(!a) return;
+ // Always play INTRO AUDIO (MP3) – no video involved
+ a.src = INTRO_AUDIO;
+ a.currentTime = 0;
+ a.loop = false;
+ a.preload = 'auto';
 
-  // Always play INTRO AUDIO (MP3) – no video involved
-  a.src = INTRO_AUDIO;
-  a.currentTime = 0;
-  a.loop = false;
-  a.preload = 'auto';
+ setGateMessage('Playing introduction…');
 
-  // User gesture required: Start button click
-  const play = () => {
-    const p = a.play();
-    if(p && typeof p.catch === 'function'){
-      p.catch(err => {
-        console.error('Intro audio blocked:', err);
-        setGateMessage('Click Start to play introduction audio');
-      });
-    }
-  };
+ a.onended = () => {
+  introFinished = true;
+  $('audioGate').classList.add('hidden');
+  update();
+ };
+ a.onerror = () => {
+  console.error('Intro.mp3 failed to load');
+  setGateMessage('Intro audio not found. Check Intro.mp3');
+  $('startBtn').disabled = false;
+ };
 
-  $('startBtn').disabled = true;
-  setGateMessage('Playing introduction…');
-
-  a.onended = () => {
-    introFinished = true;
-    $('audioGate').classList.add('hidden');
-    update();
-  };
-
-  a.onerror = () => {
-    console.error('Intro.mp3 failed to load');
-    setGateMessage('Intro audio not found. Check Intro.mp3');
+ const playAttempt = () => {
+  const p = a.play();
+  if(p && typeof p.then === 'function'){
+   p.then(() => {
+    // Disable ONLY after playback actually starts (preserves user gesture)
+    $('startBtn').disabled = true;
+   }).catch(err => {
+    console.error('Intro audio blocked:', err);
+    setGateMessage('Click Start to play introduction audio');
     $('startBtn').disabled = false;
-  };
+   });
+  }
+ };
 
-  play();
+ playAttempt();
 }
 
 /* ===== Module locking ===== */
@@ -505,12 +502,10 @@ function onPlaylistEnded(){
     function loadModule(i){
  if(!isUnlocked(i)) return;
  show('player');
+ // Set base title; Admin title will be overridden per segment
  $('title').innerText = modules[i].t;
- const v = $('video');
- // Start single video or playlist
+ // Start single video or playlist (arrays play sequentially)
  startPlaylistForModule(i);
- // Advance playlist items, then go to quiz
- v.onended = () => onPlaylistEnded();
  updateCustomPlayerUI();
  }
 

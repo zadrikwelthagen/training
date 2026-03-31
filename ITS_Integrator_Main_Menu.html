@@ -256,26 +256,23 @@
       border-radius:10px;
     }
     #certPreviewLock.hidden{display:none;}
-  
-h2{font-size:16px;margin:6px 0;}
+    h2{font-size:16px;margin:6px 0;}
 
-/* ===== Intro Progress + Skip (NEW) ===== */
-#introProgressWrap{margin:10px 0 8px;}
-#introProgressBar{height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden;border:1px solid #cbd5e1;}
-#introProgressFill{height:100%;width:0%;background:var(--accent);}
-#introTime{margin-top:6px;font-size:12px;color:#334155;font-variant-numeric:tabular-nums;}
-#introBtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
-#skipIntroBtn{background:var(--muted);} 
+    /* ===== Intro Progress + Skip (NEW) ===== */
+    #introProgressWrap{margin:10px 0 8px;}
+    #introProgressBar{height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden;border:1px solid #cbd5e1;}
+    #introProgressFill{height:100%;width:0%;background:var(--accent);}
+    #introTime{margin-top:6px;font-size:12px;color:#334155;font-variant-numeric:tabular-nums;}
+    #introBtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+    #skipIntroBtn{background:var(--muted);}
 
-
-#moduleGrid button{
-  width:90%;
-  max-width:520px;
-  padding:8px 12px;
-  font-size:13px;
-}
-
-</style>
+    #moduleGrid button{
+      width:90%;
+      max-width:520px;
+      padding:8px 12px;
+      font-size:13px;
+    }
+  </style>
 
   <!-- PDF certificate engine (pdf-lib). Offline-first: tries local pdf-lib.min.js, falls back to CDN. -->
   <script
@@ -297,61 +294,76 @@ h2{font-size:16px;margin:6px 0;}
       {t:'Linux Operating System',v:'ITS Integrator Basic Training_Linux.mp4',q:'https://forms.gle/EsjTCysDnbztkPNKA'},
       {t:'Oracle Database Management System',v:['DBMS_1.mp4','DBMS_2.mp4','DBMS_3.mp4'],q:'https://forms.gle/AkqbDQtMTP21rLA96'},
       {t:'Oracle Application Fusion Middleware',v:'ITS Integrator Basic Training_Oracle_FMW.mp4',q:'https://forms.gle/781Z5PLQdUTj6fo57'},
-      {t:'ITS Integrator Application',v:['ITS_Linux.mp4','ITS_naming.mp4','ITS_users.mp4'],q:'https://forms.gle/iFp1gGGfFedsGcdR8'},      {t:'Administration',v:['Admin_intro.mp4','Admin_housekeeping.mp4','Admin_builds.mp4','Admin_backup.mp4','Admin_oracle.mp4'],q:'https://forms.gle/7xwPe7an3LPx4Ee99'}
-
+      {t:'ITS Integrator Application',v:['ITS_Linux.mp4','ITS_naming.mp4','ITS_users.mp4'],q:'https://forms.gle/iFp1gGGfFedsGcdR8'},
+      {t:'Administration',v:['Admin_intro.mp4','Admin_housekeeping.mp4','Admin_builds.mp4','Admin_backup.mp4','Admin_oracle.mp4'],q:'https://forms.gle/7xwPe7an3LPx4Ee99'}
     ];
 
     /* Modules are freely accessible in any order. Completion is tracked but does not restrict access. */
     let completed = Array(modules.length).fill(false);
     let currentQuiz = null;
 
-/* ===== Playlist (supports single video OR an array of videos per module) ===== */
-let currentPlaylist = null;
-let playlistIndex = 0;
-let currentModuleIndex = null;
+    /* ===== Playlist (supports single video OR an array of videos per module) ===== */
+    let currentPlaylist = null;
+    let playlistIndex = 0;
+    let currentModuleIndex = null;
 
-function startPlaylistForModule(i){
- currentModuleIndex = i;
- const src = modules[i].v;
- currentPlaylist = Array.isArray(src) ? src.slice() : [src];
- playlistIndex = 0;
- playPlaylistItem();
-}
+    const $ = id => document.getElementById(id);
 
-function playPlaylistItem(){
- const v = $('video');
- if(!v || !currentPlaylist) return;
- const file = currentPlaylist[playlistIndex];
- v.src = file;
- v.load();
- // ensure onended always advances playlist
- v.onended = () => onPlaylistEnded();
- const p = v.play();
- if(p && typeof p.catch === 'function') p.catch(() => {});
- updateCustomPlayerUI();
-}
+    /* ===== NEW: Title helper shows Video X of Y when multiple videos ===== */
+    function updatePlayerTitleWithCount(){
+      if(currentModuleIndex === null) return;
+      const baseTitle = modules[currentModuleIndex].t;
+      const total = currentPlaylist ? currentPlaylist.length : 1;
+      const current = currentPlaylist ? (playlistIndex + 1) : 1;
+      const suffix = total > 1 ? ` (Part ${current} of ${total})` : ` `;
+      $('title').innerText = baseTitle + suffix;
+    }
 
-function onPlaylistEnded(){
- if(!currentPlaylist) return;
- if(playlistIndex < currentPlaylist.length - 1){
-  playlistIndex++;
-  playPlaylistItem();
-  return;
- }
- // Playlist finished → go to quiz for this module
- const i = currentModuleIndex;
- currentPlaylist = null;
- currentModuleIndex = null;
- playlistIndex = 0;
- goQuiz(i);
-}
+    function startPlaylistForModule(i){
+      currentModuleIndex = i;
+      const src = modules[i].v;
+      currentPlaylist = Array.isArray(src) ? src.slice() : [src];
+      playlistIndex = 0;
+      playPlaylistItem();
+    }
 
+    function playPlaylistItem(){
+      const v = $('video');
+      if(!v || !currentPlaylist) return;
+
+      const file = currentPlaylist[playlistIndex];
+      v.src = file;
+      v.load();
+
+      // NEW: update title to show Video X of Y
+      updatePlayerTitleWithCount();
+
+      // ensure onended always advances playlist
+      v.onended = () => onPlaylistEnded();
+
+      const p = v.play();
+      if(p && typeof p.catch === 'function') p.catch(() => {});
+      updateCustomPlayerUI();
+    }
+
+    function onPlaylistEnded(){
+      if(!currentPlaylist) return;
+      if(playlistIndex < currentPlaylist.length - 1){
+        playlistIndex++;
+        playPlaylistItem();
+        return;
+      }
+      // Playlist finished → go to quiz for this module
+      const i = currentModuleIndex;
+      currentPlaylist = null;
+      currentModuleIndex = null;
+      playlistIndex = 0;
+      goQuiz(i);
+    }
 
     /* Audio gate state: menu locked until Intro.mp3 ends */
     let introFinished = false;
     let introStarted = false;
-
-    const $ = id => document.getElementById(id);
 
     /* ===== Screen switching / Completion lock ===== */
     let conclusionLocked = false;
@@ -359,10 +371,8 @@ function onPlaylistEnded(){
     function lockCompletionUI(lock){
       const actions = $('completeActions');
       const gate = $('conclusionGate');
-
       // Keep actions visible; grey them out while locked
       if(actions) actions.classList.toggle('locked', !!lock);
-
       // Gate overlay visible while locked (message to user)
       if(gate) gate.classList.toggle('hidden', !lock);
 
@@ -385,10 +395,8 @@ function onPlaylistEnded(){
     function playConclusionAudio(){
       const a = $('conclusionAudio');
       if(!a) { lockCompletionUI(false); conclusionLocked=false; return; }
-
       conclusionLocked = true;
       lockCompletionUI(true);
-
       a.src = CONCLUSION_AUDIO;
       a.loop = false;
       a.preload = 'auto';
@@ -396,7 +404,7 @@ function onPlaylistEnded(){
 
       const gate = $('conclusionGate');
       const msg = $('conclusionGateMsg');
-      if(msg) msg.innerText = 'Please listen to the conclusion message…';
+      if(msg) msg.innerText = 'Conclusion message... (Certificate actions will unlock when the audio finishes)';
 
       const attemptPlay = () => {
         const p = a.play();
@@ -414,7 +422,6 @@ function onPlaylistEnded(){
 
       a.onended = () => { conclusionLocked=false; lockCompletionUI(false); };
       a.onerror = () => { conclusionLocked=false; lockCompletionUI(false); };
-
       attemptPlay();
     }
 
@@ -433,10 +440,10 @@ function onPlaylistEnded(){
         v.currentTime = 0;
         v.removeAttribute('src');
         v.load();
- // reset playlist state
- currentPlaylist = null;
- currentModuleIndex = null;
- playlistIndex = 0;
+        // reset playlist state
+        currentPlaylist = null;
+        currentModuleIndex = null;
+        playlistIndex = 0;
       }catch(e){}
       // reset UI when stopping
       updateCustomPlayerUI(true);
@@ -458,130 +465,146 @@ function onPlaylistEnded(){
       }
     }
 
-    
-/* ===== Intro progress + Skip (NEW) ===== */
-let introRaf = null;
-function resetIntroUI(){
-  const fill = $('introProgressFill');
-  const bar = $('introProgressBar');
-  const time = $('introTime');
-  if(fill) fill.style.width = '0%';
-  if(bar) bar.setAttribute('aria-valuenow','0');
-  if(time) time.textContent = '0:00 / 0:00';
-}
-function updateIntroUI(){
-  const a = $('menuAudio');
-  if(!a) return;
-  const dur = isFinite(a.duration) ? a.duration : 0;
-  const cur = isFinite(a.currentTime) ? a.currentTime : 0;
-  const pct = dur > 0 ? Math.max(0, Math.min(100, (cur/dur)*100)) : 0;
-  const fill = $('introProgressFill');
-  const bar = $('introProgressBar');
-  const time = $('introTime');
-  if(fill) fill.style.width = pct.toFixed(2) + '%';
-  if(bar) bar.setAttribute('aria-valuenow', String(Math.round(pct)));
-  if(time) time.textContent = `${fmtTime(cur)} / ${fmtTime(dur)}`;
-}
-function introTick(){
-  updateIntroUI();
-  const a = $('menuAudio');
-  if(a && !a.paused && !a.ended){
-    introRaf = requestAnimationFrame(introTick);
-  }
-}
-function stopIntroTick(){
-  if(introRaf){
-    cancelAnimationFrame(introRaf);
-    introRaf = null;
-  }
-}
-function finishIntro(){
-  stopIntroTick();
-  const a = $('menuAudio');
-  if(a){
-    try{ a.pause(); }catch(e){}
-    try{ a.currentTime = 0; }catch(e){}
-  }
-  introFinished = true;
-  $('audioGate')?.classList.add('hidden');
-  update();
-}
-function skipIntro(){
-  setGateMessage('Skipping introduction…');
-  finishIntro();
-}
+    /* ===== Intro progress + Skip (NEW) ===== */
+    let introRaf = null;
 
-/* ===== Audio Gate ===== */
+    function resetIntroUI(){
+      const fill = $('introProgressFill');
+      const bar = $('introProgressBar');
+      const time = $('introTime');
+      if(fill) fill.style.width = '0%';
+      if(bar) bar.setAttribute('aria-valuenow','0');
+      if(time) time.textContent = '0:00 / 0:00';
+    }
+
+    function fmtTime(sec){
+      if(!isFinite(sec) || sec < 0) sec = 0;
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = Math.floor(sec % 60);
+      const mm = String(m).padStart(2,'0');
+      const ss = String(s).padStart(2,'0');
+      return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss.padStart(2,'0')}`;
+    }
+
+    function updateIntroUI(){
+      const a = $('menuAudio');
+      if(!a) return;
+      const dur = isFinite(a.duration) ? a.duration : 0;
+      const cur = isFinite(a.currentTime) ? a.currentTime : 0;
+      const pct = dur > 0 ? Math.max(0, Math.min(100, (cur/dur)*100)) : 0;
+      const fill = $('introProgressFill');
+      const bar = $('introProgressBar');
+      const time = $('introTime');
+      if(fill) fill.style.width = pct.toFixed(2) + '%';
+      if(bar) bar.setAttribute('aria-valuenow', String(Math.round(pct)));
+      if(time) time.textContent = `${fmtTime(cur)} / ${fmtTime(dur)}`;
+    }
+
+    function introTick(){
+      updateIntroUI();
+      const a = $('menuAudio');
+      if(a && !a.paused && !a.ended){
+        introRaf = requestAnimationFrame(introTick);
+      }
+    }
+
+    function stopIntroTick(){
+      if(introRaf){
+        cancelAnimationFrame(introRaf);
+        introRaf = null;
+      }
+    }
+
+    function finishIntro(){
+      stopIntroTick();
+      const a = $('menuAudio');
+      if(a){
+        try{ a.pause(); }catch(e){}
+        try{ a.currentTime = 0; }catch(e){}
+      }
+      introFinished = true;
+      $('audioGate')?.classList.add('hidden');
+      update();
+    }
+
     function setGateMessage(msg){
       const p = $('gateMsg');
       if(p) p.innerText = msg;
     }
 
+    function skipIntro(){
+      setGateMessage('Skipping introduction…');
+      finishIntro();
+    }
+
     function startIntroAudio(){
-  const a = $('menuAudio');
-  if(!a) return;
+      const a = $('menuAudio');
+      if(!a) return;
+      introStarted = true;
+      resetIntroUI();
 
-  introStarted = true;
-  resetIntroUI();
+      // Always play INTRO AUDIO (MP3) – no video involved
+      a.src = INTRO_AUDIO;
+      a.currentTime = 0;
+      a.loop = false;
+      a.preload = 'auto';
 
-  // Always play INTRO AUDIO (MP3) – no video involved
-  a.src = INTRO_AUDIO;
-  a.currentTime = 0;
-  a.loop = false;
-  a.preload = 'auto';
+      setGateMessage('Playing introduction…');
 
-  setGateMessage('Playing introduction…');
+      a.onloadedmetadata = () => { updateIntroUI(); };
+      a.ontimeupdate = () => { updateIntroUI(); };
 
-  a.onloadedmetadata = () => { updateIntroUI(); };
-  a.ontimeupdate = () => { updateIntroUI(); };
+      a.onplay = () => {
+        stopIntroTick();
+        introTick();
+      };
 
-  a.onplay = () => {
-    stopIntroTick();
-    introTick();
-  };
-  a.onpause = () => { stopIntroTick(); updateIntroUI(); };
+      a.onpause = () => { stopIntroTick(); updateIntroUI(); };
 
-  a.onended = () => {
-    stopIntroTick();
-    introFinished = true;
-    $('audioGate').classList.add('hidden');
-    update();
-  };
+      a.onended = () => {
+        stopIntroTick();
+        introFinished = true;
+        $('audioGate').classList.add('hidden');
+        update();
+      };
 
-  a.onerror = () => {
-    console.error('Intro.mp3 failed to load');
-    setGateMessage('Intro audio not found. Check Intro.mp3');
-    $('startBtn').disabled = false;
-  };
+      a.onerror = () => {
+        console.error('Intro.mp3 failed to load');
+        setGateMessage('Intro audio not found. Check Intro.mp3');
+        $('startBtn').disabled = false;
+      };
 
-  // Attempt playback directly from the click handler context
-  const p = a.play();
-  if(p && typeof p.then === 'function'){
-    p.then(() => {
-      $('startBtn').disabled = true;
-      $('skipIntroBtn').disabled = false;
-      updateIntroUI();
-    }).catch(err => {
-      console.error('Intro audio blocked:', err);
-      setGateMessage('Click Start to play introduction audio');
-      $('startBtn').disabled = false;
-    });
-  }
-}
+      // Attempt playback directly from the click handler context
+      const p = a.play();
+      if(p && typeof p.then === 'function'){
+        p.then(() => {
+          $('startBtn').disabled = true;
+          $('skipIntroBtn').disabled = false;
+          updateIntroUI();
+        }).catch(err => {
+          console.error('Intro audio blocked:', err);
+          setGateMessage('Click Start to play introduction audio');
+          $('startBtn').disabled = false;
+        });
+      }
+    }
 
-/* ===== Module locking ===== */
+    /* ===== Module locking ===== */
     function isUnlocked(i){ return true; }
 
     /* ===== Module video ===== */
     function loadModule(i){
- if(!isUnlocked(i)) return;
- show('player');
- // Set base title; Admin title will be overridden per segment
- $('title').innerText = modules[i].t;
- // Start single video or playlist (arrays play sequentially)
- startPlaylistForModule(i);
- updateCustomPlayerUI();
- }
+      if(!isUnlocked(i)) return;
+      show('player');
+
+      // Base title set here; will be overridden by updatePlayerTitleWithCount() once playlist starts
+      $('title').innerText = modules[i].t;
+
+      // Start single video or playlist (arrays play sequentially)
+      startPlaylistForModule(i);
+      updateCustomPlayerUI();
+    }
 
     /* ===== Quiz ===== */
     function goQuiz(i){
@@ -619,13 +642,20 @@ function skipIntro(){
 
       const grid = $('moduleGrid');
       grid.innerHTML = '';
+
       modules.forEach((m,i) => {
         const b = document.createElement('button');
+
+        // NEW: Show number of videos on the module button (string => 1, array => length)
+        const videoCount = Array.isArray(m.v) ? m.v.length : 1;
+        const videoLabel = videoCount > 1 ? ` (${videoCount} videos)` : ` (1 video)`;
+
         b.textContent = m.t + (completed[i] ? ' ✓' : '');
         b.disabled = !isUnlocked(i);
         b.onclick = () => loadModule(i);
         grid.appendChild(b);
       });
+
       updateCertificateButtons();
     }
 
@@ -641,33 +671,28 @@ function skipIntro(){
        CUSTOM VIDEO CONTROLS
        ========================= */
     let isSeeking = false;
-    function fmtTime(sec){
-      if(!isFinite(sec) || sec < 0) sec = 0;
-      const h = Math.floor(sec / 3600);
-      const m = Math.floor((sec % 3600) / 60);
-      const s = Math.floor(sec % 60);
-      const mm = String(m).padStart(2,'0');
-      const ss = String(s).padStart(2,'0');
-      return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss.padStart(2,'0')}`;
-    }
+
     function togglePlay(){
       const v = $('video');
       if(!v) return;
       if(v.paused) v.play().catch(()=>{});
       else v.pause();
     }
+
     function setMuted(m){
       const v = $('video');
       if(!v) return;
       v.muted = m;
       updateCustomPlayerUI();
     }
+
     function seekTo(t){
       const v = $('video');
       if(!v || !isFinite(v.duration)) return;
       v.currentTime = Math.max(0, Math.min(v.duration, t));
       updateCustomPlayerUI();
     }
+
     function toggleFullscreen(){
       const wrap = $('playerWrap');
       if(!wrap) return;
@@ -678,6 +703,7 @@ function skipIntro(){
         (doc.exitFullscreen?.() || doc.webkitExitFullscreen?.() || doc.msExitFullscreen?.());
       }
     }
+
     function updateCustomPlayerUI(reset=false){
       const v = $('video');
       if(!v) return;
@@ -685,6 +711,7 @@ function skipIntro(){
       const muteBtn = $('muteBtn');
       const seek = $('seek');
       const time = $('timeText');
+
       if(reset){
         if(playBtn) playBtn.textContent = '▶ Play';
         if(muteBtn) muteBtn.textContent = '🔊';
@@ -692,16 +719,20 @@ function skipIntro(){
         if(time) time.textContent = '0:00 / 0:00';
         return;
       }
+
       if(playBtn) playBtn.textContent = v.paused ? '▶ Play' : '⏸ Pause';
       if(muteBtn) muteBtn.textContent = (v.muted || v.volume === 0) ? '🔇' : '🔊';
+
       const dur = isFinite(v.duration) ? v.duration : 0;
       const cur = isFinite(v.currentTime) ? v.currentTime : 0;
+
       if(seek){
         seek.max = dur || 0;
         if(!isSeeking) seek.value = cur || 0;
       }
       if(time) time.textContent = `${fmtTime(cur)} / ${fmtTime(dur)}`;
     }
+
     function initCustomPlayer(){
       const v = $('video');
       if(!v) return;
@@ -735,11 +766,13 @@ function skipIntro(){
           isSeeking = false;
         });
       }
+
       $('fsBtn')?.addEventListener('click', toggleFullscreen);
 
       document.addEventListener('keydown', (e) => {
         if($('player')?.classList.contains('hidden')) return;
         if(e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+
         if(e.code === 'Space'){
           e.preventDefault();
           togglePlay();
@@ -770,6 +803,7 @@ function skipIntro(){
       const el = $('certStatus');
       if(el) el.textContent = msg;
     }
+
     function ensurePdfLibLoaded(){
       if(!window.PDFLib){
         alert('PDF engine not loaded. Place pdf-lib.min.js in the same folder as this HTML (recommended for offline), or allow the CDN fallback.');
@@ -777,10 +811,12 @@ function skipIntro(){
       }
       return true;
     }
+
     function formatDateForCertificate(){
       const dt = new Date();
       return new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'long', year:'numeric' }).format(dt);
     }
+
     function clearPreview(){
       if(lastGeneratedUrl){
         URL.revokeObjectURL(lastGeneratedUrl);
@@ -792,9 +828,11 @@ function skipIntro(){
       const dl = $('downloadCertBtn');
       if(dl) dl.disabled = true;
     }
+
     function isCourseComplete(){
       return completed.filter(Boolean).length === modules.length;
     }
+
     function updateCertificateButtons(){
       const complete = isCourseComplete();
       const preview = $('previewCertBtn');
@@ -874,8 +912,7 @@ function skipIntro(){
     }
 
     async function previewCertificate(){
-      if(conclusionLocked) return; // NEW: block while locked
-
+      if(conclusionLocked) return; // block while locked
       if(!isCourseComplete()){
         setCertStatus('Complete all modules (100%) before generating the certificate.');
         return;
@@ -905,8 +942,7 @@ function skipIntro(){
     }
 
     function downloadCertificate(){
-      if(conclusionLocked) return; // NEW: block while locked
-
+      if(conclusionLocked) return; // block while locked
       if(!isCourseComplete()){
         setCertStatus('Complete all modules (100%) before downloading the certificate.');
         return;
@@ -920,6 +956,7 @@ function skipIntro(){
         .replace(/[^a-z0-9\- _]/gi,'')
         .trim()
         .replace(/\s+/g,'_');
+
       const a = document.createElement('a');
       a.href = lastGeneratedUrl;
       a.download = `ITS_Integrator_Certificate_${safe}.pdf`;
@@ -955,9 +992,11 @@ function skipIntro(){
 
       $('audioGate').classList.remove('hidden');
       setGateMessage('Click Start to play introduction audio');
- $('skipIntroBtn').disabled = false;
- $('skipIntroBtn').addEventListener('click', (e) => { e.preventDefault(); skipIntro(); });
- resetIntroUI();
+
+      $('skipIntroBtn').disabled = false;
+      $('skipIntroBtn').addEventListener('click', (e) => { e.preventDefault(); skipIntro(); });
+
+      resetIntroUI();
       $('startBtn').addEventListener('click', (e) => {
         e.preventDefault();
         startIntroAudio();
@@ -974,22 +1013,22 @@ function skipIntro(){
   <!-- Intro Audio gate overlay -->
   <div id="audioGate">
     <div class="panel">
- <h2>Start Training</h2>
- <p id="gateMsg">Click Start</p>
- <div id="introProgressWrap" aria-label="Intro progress">
-   <div id="introProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-     <div id="introProgressFill"></div>
-   </div>
-   <div id="introTime">0:00 / 0:00</div>
- </div>
- <div id="introBtns">
-   <button id="startBtn">▶ Start</button>
-   <button id="skipIntroBtn" class="secondary" type="button">⏭ Skip Intro</button>
- </div>
-</div>
+      <h2>Start Training</h2>
+      <p id="gateMsg">Click Start</p>
+      <div id="introProgressWrap" aria-label="Intro progress">
+        <div id="introProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div id="introProgressFill"></div>
+        </div>
+        <div id="introTime">0:00 / 0:00</div>
+      </div>
+      <div id="introBtns">
+        <button id="startBtn">▶ Start</button>
+        <button id="skipIntroBtn" class="secondary" type="button">⏭ Skip Intro</button>
+      </div>
+    </div>
   </div>
 
-  <!-- NEW: Conclusion gate overlay (was referenced by your JS/CSS) -->
+  <!-- Conclusion gate overlay -->
   <div id="conclusionGate" class="hidden" aria-live="polite" aria-modal="true" role="dialog">
     <div class="panel">
       <h2>Course Completed</h2>
@@ -1029,19 +1068,17 @@ function skipIntro(){
           </div>
         </div>
       </div>
-      
-<div class="hint" style="text-align:center;margin-top:8px;">
-  <span style="display:inline-block;background:#e7f3ff;border:1px solid #b6d7ff;color:#003366;
-               padding:6px 10px;border-radius:999px;font-weight:bold;font-size:13px;">
-    
-    All modules must to be completed (100%) before the Certificate of Completion will be issued.
-</span>
-  <div style="margin-top:6px;font-size:12px;color:#555;">You may complete modules in any order, but it is recommeded that the modules are completed in the sequence below.
-</div>
-</div>
 
+      <div class="hint" style="text-align:center;margin-top:8px;">
+        <span style="display:inline-block;background:#e7f3ff;border:1px solid #b6d7ff;color:#003366;
+          padding:6px 10px;border-radius:999px;font-weight:bold;font-size:13px;">
+          All modules must to be completed (100%) before the Certificate of Completion will be issued.
+        </span>
+        <div style="margin-top:6px;font-size:12px;color:#555;">You may complete modules in any order, but it is recommeded that the modules are completed in the sequence below.
+        </div>
+      </div>
 
-<div id="moduleGrid"></div>
+      <div id="moduleGrid"></div>
     </div>
 
     <!-- PLAYER -->
@@ -1049,16 +1086,14 @@ function skipIntro(){
       <h2 id="title" style="text-align:center"></h2>
       <div id="playerWrap" class="playerWrap">
         <video id="video"></video>
-
         <div class="controlsBar" role="group" aria-label="Video controls">
           <button id="playBtn" type="button" aria-label="Play or pause">▶ Play</button>
           <input id="seek" class="range" type="range" min="0" max="0" step="0.1" value="0" aria-label="Seek" />
           <div id="timeText" class="timeText" aria-label="Time">0:00 / 0:00</div>
           <button id="muteBtn" type="button" class="secondary" aria-label="Mute or unmute">🔊</button>
-<button id="fsBtn" type="button" class="secondary" aria-label="Fullscreen">⛶</button>
+          <button id="fsBtn" type="button" class="secondary" aria-label="Fullscreen">⛶</button>
         </div>
       </div>
-
       <div class="row" style="margin-top:12px">
         <button class="secondary" onclick="show('menu')">🏠 Home</button>
       </div>
@@ -1071,14 +1106,13 @@ function skipIntro(){
       <div class="row" style="margin-top:12px">
         <button id="openTabBtn">🔗 Open in new tab (optional)</button>
         <button onclick="quizDone()">✅ Done (Module completed)</button>
-        <button class="secondary" onclick="show('menu')">🏠 Home</button>
+        <button class="secondary" onclick="show('menu')">🏠 Home (Module will NOT complete)</button>
       </div>
     </div>
 
     <!-- COMPLETION PAGE -->
     <div id="complete" class="card hidden">
       <h2 style="text-align:center">Course Completed</h2>
-
       <p class="hint" style="font-size:14px;color:#222;max-width:820px;margin:0 auto;">
         The objective of this course was to provide you with a foundational understanding of the technical components of the ITS Integrator system and the way its various software elements interact.
         <br><br>
@@ -1087,15 +1121,13 @@ function skipIntro(){
         For any additional information or technical assistance related to your environment, please reach out to Adapt IT Education Technical Services.
       </p>
 
-      <!-- UPDATED: Keep visible always; greyed-out via .locked while audio plays -->
+      <!-- Keep visible always; greyed-out via .locked while audio plays -->
       <div id="completeActions" class="row" style="margin-top:16px">
         <input id="learnerName" placeholder="Enter learner name" />
-
         <label class="secondary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:8px;color:#fff;cursor:pointer">
           📄 Upload certificate PDF
           <input type="file" id="certTemplateUpload" accept="application/pdf" style="display:none">
         </label>
-
         <button id="previewCertBtn" onclick="previewCertificate()">👁 Preview Certificate</button>
         <button id="downloadCertBtn" onclick="downloadCertificate()" disabled>⬇ Download Certificate</button>
         <button class="secondary" onclick="exitCourse()">🚪 Exit</button>
@@ -1107,15 +1139,12 @@ function skipIntro(){
 
       <div style="margin-top:12px">
         <h3 style="text-align:center;margin:0 0 10px">Certificate Preview</h3>
-
-        <!-- UPDATED: wrapper + overlay to deactivate iframe while locked -->
         <div id="certPreviewWrap">
           <iframe id="certPreviewFrame" title="Certificate Preview"></iframe>
-
           <div id="certPreviewLock" class="hidden">
             <div style="background:#fff;border:2px solid var(--brand);border-radius:12px;
-                        padding:12px 14px;max-width:520px;text-align:center;
-                        box-shadow:0 10px 25px rgba(0,0,0,.15);">
+              padding:12px 14px;max-width:520px;text-align:center;
+              box-shadow:0 10px 25px rgba(0,0,0,.15);">
               <strong>Conclusion message playing…</strong>
               <div style="font-size:13px;color:#334155;margin-top:6px;">
                 Certificate actions will unlock when the audio finishes.
@@ -1125,6 +1154,7 @@ function skipIntro(){
         </div>
       </div>
     </div>
+
   </div>
 
   <!-- Name required alert -->

@@ -258,6 +258,23 @@
     #certPreviewLock.hidden{display:none;}
   
 h2{font-size:16px;margin:6px 0;}
+
+/* ===== Intro Progress + Skip (NEW) ===== */
+#introProgressWrap{margin:10px 0 8px;}
+#introProgressBar{height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden;border:1px solid #cbd5e1;}
+#introProgressFill{height:100%;width:0%;background:var(--accent);}
+#introTime{margin-top:6px;font-size:12px;color:#334155;font-variant-numeric:tabular-nums;}
+#introBtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+#skipIntroBtn{background:var(--muted);} 
+
+
+#moduleGrid button{
+  width:90%;
+  max-width:520px;
+  padding:8px 12px;
+  font-size:13px;
+}
+
 </style>
 
   <!-- PDF certificate engine (pdf-lib). Offline-first: tries local pdf-lib.min.js, falls back to CDN. -->
@@ -441,49 +458,115 @@ function onPlaylistEnded(){
       }
     }
 
-    /* ===== Audio Gate ===== */
+    
+/* ===== Intro progress + Skip (NEW) ===== */
+let introRaf = null;
+function resetIntroUI(){
+  const fill = $('introProgressFill');
+  const bar = $('introProgressBar');
+  const time = $('introTime');
+  if(fill) fill.style.width = '0%';
+  if(bar) bar.setAttribute('aria-valuenow','0');
+  if(time) time.textContent = '0:00 / 0:00';
+}
+function updateIntroUI(){
+  const a = $('menuAudio');
+  if(!a) return;
+  const dur = isFinite(a.duration) ? a.duration : 0;
+  const cur = isFinite(a.currentTime) ? a.currentTime : 0;
+  const pct = dur > 0 ? Math.max(0, Math.min(100, (cur/dur)*100)) : 0;
+  const fill = $('introProgressFill');
+  const bar = $('introProgressBar');
+  const time = $('introTime');
+  if(fill) fill.style.width = pct.toFixed(2) + '%';
+  if(bar) bar.setAttribute('aria-valuenow', String(Math.round(pct)));
+  if(time) time.textContent = `${fmtTime(cur)} / ${fmtTime(dur)}`;
+}
+function introTick(){
+  updateIntroUI();
+  const a = $('menuAudio');
+  if(a && !a.paused && !a.ended){
+    introRaf = requestAnimationFrame(introTick);
+  }
+}
+function stopIntroTick(){
+  if(introRaf){
+    cancelAnimationFrame(introRaf);
+    introRaf = null;
+  }
+}
+function finishIntro(){
+  stopIntroTick();
+  const a = $('menuAudio');
+  if(a){
+    try{ a.pause(); }catch(e){}
+    try{ a.currentTime = 0; }catch(e){}
+  }
+  introFinished = true;
+  $('audioGate')?.classList.add('hidden');
+  update();
+}
+function skipIntro(){
+  setGateMessage('Skipping introduction…');
+  finishIntro();
+}
+
+/* ===== Audio Gate ===== */
     function setGateMessage(msg){
       const p = $('gateMsg');
       if(p) p.innerText = msg;
     }
 
     function startIntroAudio(){
- const a = $('menuAudio');
- if(!a) return;
- // Always play INTRO AUDIO (MP3) – no video involved
- a.src = INTRO_AUDIO;
- a.currentTime = 0;
- a.loop = false;
- a.preload = 'auto';
+  const a = $('menuAudio');
+  if(!a) return;
 
- setGateMessage('Playing introduction…');
+  introStarted = true;
+  resetIntroUI();
 
- a.onended = () => {
-  introFinished = true;
-  $('audioGate').classList.add('hidden');
-  update();
- };
- a.onerror = () => {
-  console.error('Intro.mp3 failed to load');
-  setGateMessage('Intro audio not found. Check Intro.mp3');
-  $('startBtn').disabled = false;
- };
+  // Always play INTRO AUDIO (MP3) – no video involved
+  a.src = INTRO_AUDIO;
+  a.currentTime = 0;
+  a.loop = false;
+  a.preload = 'auto';
 
- const playAttempt = () => {
+  setGateMessage('Playing introduction…');
+
+  a.onloadedmetadata = () => { updateIntroUI(); };
+  a.ontimeupdate = () => { updateIntroUI(); };
+
+  a.onplay = () => {
+    stopIntroTick();
+    introTick();
+  };
+  a.onpause = () => { stopIntroTick(); updateIntroUI(); };
+
+  a.onended = () => {
+    stopIntroTick();
+    introFinished = true;
+    $('audioGate').classList.add('hidden');
+    update();
+  };
+
+  a.onerror = () => {
+    console.error('Intro.mp3 failed to load');
+    setGateMessage('Intro audio not found. Check Intro.mp3');
+    $('startBtn').disabled = false;
+  };
+
+  // Attempt playback directly from the click handler context
   const p = a.play();
   if(p && typeof p.then === 'function'){
-   p.then(() => {
-    // Disable ONLY after playback actually starts (preserves user gesture)
-    $('startBtn').disabled = true;
-   }).catch(err => {
-    console.error('Intro audio blocked:', err);
-    setGateMessage('Click Start to play introduction audio');
-    $('startBtn').disabled = false;
-   });
+    p.then(() => {
+      $('startBtn').disabled = true;
+      $('skipIntroBtn').disabled = false;
+      updateIntroUI();
+    }).catch(err => {
+      console.error('Intro audio blocked:', err);
+      setGateMessage('Click Start to play introduction audio');
+      $('startBtn').disabled = false;
+    });
   }
- };
-
- playAttempt();
 }
 
 /* ===== Module locking ===== */
@@ -871,7 +954,10 @@ function onPlaylistEnded(){
       });
 
       $('audioGate').classList.remove('hidden');
-      setGateMessage('Click Start');
+      setGateMessage('Click Start to play introduction audio');
+ $('skipIntroBtn').disabled = false;
+ $('skipIntroBtn').addEventListener('click', (e) => { e.preventDefault(); skipIntro(); });
+ resetIntroUI();
       $('startBtn').addEventListener('click', (e) => {
         e.preventDefault();
         startIntroAudio();
@@ -888,10 +974,19 @@ function onPlaylistEnded(){
   <!-- Intro Audio gate overlay -->
   <div id="audioGate">
     <div class="panel">
-      <h2>Start Training</h2>
-      <p id="gateMsg">Click Start</p>
-      <button id="startBtn">▶ Start</button>
-    </div>
+ <h2>Start Training</h2>
+ <p id="gateMsg">Click Start</p>
+ <div id="introProgressWrap" aria-label="Intro progress">
+   <div id="introProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+     <div id="introProgressFill"></div>
+   </div>
+   <div id="introTime">0:00 / 0:00</div>
+ </div>
+ <div id="introBtns">
+   <button id="startBtn">▶ Start</button>
+   <button id="skipIntroBtn" class="secondary" type="button">⏭ Skip Intro</button>
+ </div>
+</div>
   </div>
 
   <!-- NEW: Conclusion gate overlay (was referenced by your JS/CSS) -->
@@ -938,10 +1033,13 @@ function onPlaylistEnded(){
 <div class="hint" style="text-align:center;margin-top:8px;">
   <span style="display:inline-block;background:#e7f3ff;border:1px solid #b6d7ff;color:#003366;
                padding:6px 10px;border-radius:999px;font-weight:bold;font-size:13px;">
-    Recommended order: 1 → 2 → 3 → 4 → 5 → 6
-  </span>
-  <div style="margin-top:6px;font-size:12px;color:#555;">You may complete modules in any order.</div>
+    
+    All modules must to be completed (100%) before the Certificate of Completion will be issued.
+</span>
+  <div style="margin-top:6px;font-size:12px;color:#555;">You may complete modules in any order, but it is recommeded that the modules are completed in the sequence below.
 </div>
+</div>
+
 
 <div id="moduleGrid"></div>
     </div>
@@ -972,7 +1070,7 @@ function onPlaylistEnded(){
       <iframe id="quizFrame"></iframe>
       <div class="row" style="margin-top:12px">
         <button id="openTabBtn">🔗 Open in new tab (optional)</button>
-        <button onclick="quizDone()">✅ Done to complete module</button>
+        <button onclick="quizDone()">✅ Done (Module completed)</button>
         <button class="secondary" onclick="show('menu')">🏠 Home</button>
       </div>
     </div>

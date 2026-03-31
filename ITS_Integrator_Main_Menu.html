@@ -221,9 +221,6 @@
       flex:1 1 260px;
       min-width:180px;
     }
-    #volume{
-      width:120px;
-    }
     .spacer{
       flex: 0 0 8px;
     }
@@ -588,13 +585,6 @@ function onPlaylistEnded(){
       v.muted = m;
       updateCustomPlayerUI();
     }
-    function setVolume(val){
-      const v = $('video');
-      if(!v) return;
-      v.volume = Math.max(0, Math.min(1, val));
-      if(v.volume === 0) v.muted = true;
-      updateCustomPlayerUI();
-    }
     function seekTo(t){
       const v = $('video');
       if(!v || !isFinite(v.duration)) return;
@@ -617,21 +607,16 @@ function onPlaylistEnded(){
       const playBtn = $('playBtn');
       const muteBtn = $('muteBtn');
       const seek = $('seek');
-      const volume = $('volume');
       const time = $('timeText');
       if(reset){
         if(playBtn) playBtn.textContent = '▶ Play';
         if(muteBtn) muteBtn.textContent = '🔊';
         if(seek){ seek.value = 0; seek.max = 0; }
-        if(volume) volume.value = 1;
         if(time) time.textContent = '0:00 / 0:00';
         return;
       }
       if(playBtn) playBtn.textContent = v.paused ? '▶ Play' : '⏸ Pause';
       if(muteBtn) muteBtn.textContent = (v.muted || v.volume === 0) ? '🔇' : '🔊';
-      if(volume && !document.activeElement?.matches('#volume')){
-        volume.value = (v.muted ? 0 : v.volume);
-      }
       const dur = isFinite(v.duration) ? v.duration : 0;
       const cur = isFinite(v.currentTime) ? v.currentTime : 0;
       if(seek){
@@ -673,15 +658,6 @@ function onPlaylistEnded(){
           isSeeking = false;
         });
       }
-
-      const vol = $('volume');
-      if(vol){
-        vol.addEventListener('input', () => {
-          const val = parseFloat(vol.value || '1');
-          setVolume(val);
-        });
-      }
-
       $('fsBtn')?.addEventListener('click', toggleFullscreen);
 
       document.addEventListener('keydown', (e) => {
@@ -978,8 +954,7 @@ function onPlaylistEnded(){
           <input id="seek" class="range" type="range" min="0" max="0" step="0.1" value="0" aria-label="Seek" />
           <div id="timeText" class="timeText" aria-label="Time">0:00 / 0:00</div>
           <button id="muteBtn" type="button" class="secondary" aria-label="Mute or unmute">🔊</button>
-          <input id="volume" class="range" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume" />
-          <button id="fsBtn" type="button" class="secondary" aria-label="Fullscreen">⛶</button>
+<button id="fsBtn" type="button" class="secondary" aria-label="Fullscreen">⛶</button>
         </div>
       </div>
 

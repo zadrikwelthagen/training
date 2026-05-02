@@ -290,12 +290,12 @@
 
     /* ===== Modules ===== */
     const modules = [
-      {t:'General Infrastructure',v:'ITS Integrator Basic Training_General_Infra.mp4',q:'https://forms.gle/z8jLbgVMc1QTatjU9'},
-      {t:'Linux Operating System',v:'ITS Integrator Basic Training_Linux.mp4',q:'https://forms.gle/EsjTCysDnbztkPNKA'},
-      {t:'Oracle Database Management System',v:['DBMS_1.mp4','DBMS_2.mp4','DBMS_3.mp4'],q:'https://forms.gle/AkqbDQtMTP21rLA96'},
-      {t:'Oracle Application Fusion Middleware',v:'ITS Integrator Basic Training_Oracle_FMW.mp4',q:'https://forms.gle/781Z5PLQdUTj6fo57'},
-      {t:'ITS Integrator Application',v:['ITS_Linux.mp4','ITS_naming.mp4','ITS_users.mp4'],q:'https://forms.gle/iFp1gGGfFedsGcdR8'},
-      {t:'Administration',v:['Admin_intro.mp4','Admin_housekeeping.mp4','Admin_builds.mp4','Admin_backup.mp4','Admin_oracle.mp4'],q:'https://forms.gle/7xwPe7an3LPx4Ee99'}
+      {t:'General Infrastructure',v:'ITS Integrator Basic Training_General_Infra.mp4',q:'General_info_Quiz.html'},
+      {t:'Linux Operating System',v:'ITS Integrator Basic Training_Linux.mp4',q:'Linux_Quiz.html'},
+      {t:'Oracle Database Management System',v:['DBMS_1.mp4','DBMS_2.mp4','DBMS_3.mp4'],q:'DBMS_Quiz.html'},
+      {t:'Oracle Application Fusion Middleware',v:'ITS Integrator Basic Training_Oracle_FMW.mp4',q:'FMW_Quiz.html'},
+      {t:'ITS Integrator Application',v:['ITS_Linux.mp4','ITS_naming.mp4','ITS_users.mp4'],q:'Integrator_App_Quiz.html'},
+      {t:'Administration',v:['Admin_intro.mp4','Admin_housekeeping.mp4','Admin_builds.mp4','Admin_backup.mp4','Admin_oracle.mp4'],q:'Admin_Quiz.html'}
     ];
 
     /* Modules are freely accessible in any order. Completion is tracked but does not restrict access. */
@@ -1104,7 +1104,6 @@
       <h2 id="quizTitle" style="text-align:center"></h2>
       <iframe id="quizFrame"></iframe>
       <div class="row" style="margin-top:12px">
-        <button id="openTabBtn">🔗 Open in new tab (optional)</button>
         <button onclick="quizDone()">✅ Done (Module completed)</button>
         <button class="secondary" onclick="show('menu')">🏠 Home (Module will NOT complete)</button>
       </div>

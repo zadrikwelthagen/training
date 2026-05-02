@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ITS Integrator Application Quiz</title>
+
+  <style>
+  :root{
+    --bg:#0b3c5d; --card:#e0f2fe; --muted:#b9e6ff; --text:#f1f5f9; --ink:#0b1220;
+    --accent:#0284c7; --accent2:#38bdf8; --good:#22c55e; --bad:#ef4444;
+    --border:rgba(255,255,255,.18); --border2:rgba(2,132,199,.35);
+  }
+
+  /* ===== Full iframe height foundation ===== */
+  html, body{
+    height:100%;
+    margin:0;
+  }
+
+  *{box-sizing:border-box}
+
+  body{
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:radial-gradient(1200px 800px at 20% 0%, #0f4e78 0%, var(--bg) 55%);
+    color:var(--text);
+    display:flex;
+    justify-content:center;
+    align-items:stretch;
+  }
+
+  /* ===== Main wrapper fills iframe ===== */
+  .wrap{
+    max-width:980px;
+    width:100%;
+    height:100%;
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ===== Header ===== */
+  .header{
+    display:flex;
+    gap:16px;
+    justify-content:space-between;
+    margin-bottom:12px;
+    flex:0 0 auto;
+  }
+
+  .title h1{
+    margin:0;
+    font-size:22px;
+    color:#e0f2fe;
+  }
+
+  .title p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .badge{
+    border:1px solid var(--border);
+    background:rgba(224,242,254,.15);
+    padding:10px 12px;
+    border-radius:14px;
+    min-width:220px;
+  }
+
+  .row{
+    display:flex;
+    justify-content:space-between;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .row strong{color:#fff}
+
+  /* ===== Quiz card fills remaining space ===== */
+  .card{
+    border:1px solid var(--border);
+    background:rgba(224,242,254,.1);
+    border-radius:18px;
+    padding:16px;
+    flex:1 1 auto;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+
+  /* ===== Scrollable question area ===== */
+  .panel{
+    background:var(--card);
+    color:var(--ink);
+    border-radius:16px;
+    padding:18px;
+    flex:1 1 auto;
+    overflow-y:auto;
+  }
+
+  h2{
+    margin:0 0 12px;
+    font-size:18px;
+  }
+
+  .options{display:grid;gap:10px}
+
+  label.opt {
+  display:flex;
+  gap:8px;              /* was 10px */
+  border:1px solid var(--border2);
+  background:#fff;
+  padding:8px 10px;     /* was 12px */
+  border-radius:10px;   /* was 14px */
+  cursor:pointer;
+  font-size:13px;       /* NEW: smaller text */
+}
+
+label.opt input {
+  transform: scale(0.9);
+  margin-top:2px;
+}
+
+  label.opt.disabled{opacity:.85;cursor:default}
+
+  /* ===== Bottom actions: always visible ===== */
+  .actions{
+    flex:0 0 auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:12px;
+    padding-top:12px;
+    border-top:1px solid rgba(255,255,255,0.25);
+  }
+
+  .hint{color:var(--muted);font-size:13px}
+
+  button{
+    border:1px solid var(--border);
+    background:rgba(224,242,254,.18);
+    color:#fff;
+    padding:10px 14px;
+    border-radius:14px;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  button.primary{
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    color:#041a2a;
+  }
+
+  button:disabled{opacity:.5;cursor:not-allowed}
+
+.feedback{
+  margin-top:8px;          /* was 12px */
+  padding:8px 10px;        /* was 12px */
+  border-radius:10px;      /* was 14px */
+  font-weight:600;         /* slightly lighter */
+  font-size:13px;          /* NEW: smaller text */
+  line-height:1.3;
+}
+
+  .good{background:rgba(34,197,94,.12);color:#0b3c1d}
+  .bad{background:rgba(239,68,68,.1);color:#4b0f0f}
+  </style>
+</head>
+<body>
+
+<div class="wrap" id="quizScreen">
+
+  <div class="header">
+    <div class="title">
+      <h1>ITS Integrator Application Quiz</h1>
+      <p>Answer all questions.<br>You’ll receive instant feedback and a final result.</p>
+    </div>
+
+    <div class="badge">
+      <div class="row"><span>Required Pass mark</span><strong id="passMarkText">80%</strong></div>
+      <div class="row"><span>Retakes</span><strong id="retakeCountText">0</strong></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="panel" id="quizArea"></div>
+
+    <div class="actions">
+      <div class="hint" id="hint"></div>
+      <button class="primary" id="nextBtn" disabled>Next</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="wrap" id="resultScreen" style="display:none"></div>
+
+<script>
+const PASS_PERCENT = 80;
+
+const quizData = [
+  {
+    "id": "q1",
+    "points": 1,
+    "question": "What environment setting identifies which Oracle database instance is accessed ?",
+    "options": [
+      "ORACLE_INS",
+      "TWO_TASK",
+      "ORACLE_PATH",
+      "ORACLE_PATH"
+    ],
+    "correct": 1
+  },
+  {
+    "id": "q2",
+    "points": 1,
+    "question": "What script is used to compile c programs ?",
+    "options": [
+      "g32uni",
+      "g34uni",
+      "g33uni"
+    ],
+    "correct": 1
+  },
+  {
+    "id": "q3",
+    "points": 1,
+    "question": "Which server must be started first ?",
+    "options": [
+      "Database Server",
+      "Application Server",
+      "Jasper Server"
+    ],
+    "correct": 0
+  },
+  {
+    "id": "q4",
+    "points": 3,
+    "question": "Which of these password policies can be enforced by OID?",
+    "options": [
+      "A. Users cannot reuse previously used passwords",
+      "B.The minimum number of characters a password must contain",
+      "C.The grace period for logins after password expiration, by time or by number of logins",
+      "A, B, C"
+    ],
+    "correct": 3
+  },
+  {
+    "id": "q5",
+    "points": 1,
+    "question": "Can users work while the schema passwords are being changed?",
+    "options": [
+      "Yes",
+      "No"
+    ],
+    "correct": 1
+  }
+];
+
+let currentIndex = 0;
+let answers = {};
+let retakes = 0;
+
+const quizArea = document.getElementById('quizArea');
+const nextBtn = document.getElementById('nextBtn');
+const hint = document.getElementById('hint');
+const quizScreen = document.getElementById('quizScreen');
+const resultScreen = document.getElementById('resultScreen');
+const retakeCountText = document.getElementById('retakeCountText');
+
+document.getElementById('passMarkText').textContent = PASS_PERCENT + '%';
+
+function render(){
+  const q = quizData[currentIndex];
+  hint.textContent = `Question ${currentIndex+1} of ${quizData.length}`;
+
+  const saved = answers[q.id];
+  const hasAnswered = !!saved;
+
+  quizArea.innerHTML = `
+    <h2>${q.question}</h2>
+    <div class="options">
+      ${q.options.map((o,i)=>`
+        <label class="opt ${hasAnswered?'disabled':''}">
+          <input type="radio" name="${q.id}" ${saved?.selected===i?'checked':''} ${hasAnswered?'disabled':''}
+            onchange="selectAnswer('${q.id}',${i})">
+          ${o}
+        </label>
+      `).join('')}
+    </div>
+    <div id="fb"></div>
+  `;
+
+  nextBtn.disabled = !hasAnswered;
+  nextBtn.textContent = currentIndex === quizData.length-1 ? 'Submit' : 'Next';
+
+  if(hasAnswered) showFeedback(q, saved.selected);
+}
+
+window.selectAnswer = function(id,i){
+  const q = quizData.find(x=>x.id===id);
+  answers[id] = { selected:i, isCorrect:i===q.correct };
+  showFeedback(q,i);
+  nextBtn.disabled = false;
+  document.querySelectorAll('input').forEach(x=>x.disabled=true);
+}
+
+function showFeedback(q,i){
+  document.getElementById('fb').innerHTML = i===q.correct
+    ? '<div class="feedback good">✅ Correct</div>'
+    : `<div class="feedback bad">❌ Incorrect<br>✅ Correct: <b>${q.options[q.correct]}</b></div>`;
+}
+
+nextBtn.onclick = ()=>{
+  if(currentIndex === quizData.length-1) submit();
+  else { currentIndex++; render(); }
+};
+
+function submit(){
+  const score = quizData.reduce((a,q)=>a+(answers[q.id]?.isCorrect?q.points:0),0);
+  const possible = quizData.reduce((a,q)=>a+q.points,0);
+  const percent = Math.round(score/possible*100);
+  const pass = percent >= PASS_PERCENT;
+
+  quizScreen.style.display='none';
+  resultScreen.style.display='block';
+
+  resultScreen.innerHTML = `
+    <div class="card">
+      <h1>${pass?'✅ PASS':'❌ FAIL'} (${percent}%)</h1>
+      <p>Score: ${score} / ${possible}</p>
+      <p>Pass mark: ${PASS_PERCENT}%</p>
+      <p><strong>Retakes used:</strong> ${retakes}</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+        ${pass?'':'<button class="primary" onclick="retake()">Retake</button>'}
+        <button onclick="exitProgram()">Exit</button>
+      </div>
+    </div>
+  `;
+}
+
+window.retake = ()=>{
+  retakes++;
+  retakeCountText.textContent = retakes;
+  currentIndex = 0;
+  answers = {};
+  resultScreen.style.display='none';
+  quizScreen.style.display='block';
+  render();
+}
+
+window.exitProgram = ()=>{
+  document.body.innerHTML = '<div class="wrap"><div class="card"><h2>Quiz exited</h2><p>Enter the ✅ Done (Module completed) if you finished the quiz.</p></div></div>';
+}
+
+render();
+</script>
+</body>
+</html>

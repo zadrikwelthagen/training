@@ -304,7 +304,45 @@
   </script>
 
   <script>
-    /* ===== Asset ===== */
+    /* ===== Progress Persistence (localStorage) ===== */
+const STORAGE_KEY = 'ITS_Integrator_Progress_v1';
+
+function saveProgress() {
+  const data = {
+    moduleCompleted,
+    quizCompleted,
+    completed,
+    learnerName: $('learnerName')?.value || ''
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadProgress() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+
+  try {
+    const data = JSON.parse(raw);
+
+    if (Array.isArray(data.moduleCompleted)) {
+      moduleCompleted = data.moduleCompleted;
+    }
+    if (Array.isArray(data.quizCompleted)) {
+      quizCompleted = data.quizCompleted;
+    }
+    if (Array.isArray(data.completed)) {
+      completed = data.completed;
+    }
+    if (data.learnerName && $('learnerName')) {
+      $('learnerName').value = data.learnerName;
+    }
+  } catch (e) {
+    console.warn('Progress data corrupted, resetting');
+    localStorage.removeItem(STORAGE_KEY);
+  }
+}
+
+/* ===== Asset ===== */
     const INTRO_AUDIO = 'Intro.mp3';
     const CONCLUSION_AUDIO = 'Conclusion msg.mp3';
 
@@ -382,6 +420,7 @@
 const i = currentModuleIndex;
 
 moduleCompleted[i] = true;   // ✅ THIS IS THE KEY CHANGE
+saveProgress();
 
 currentPlaylist = null;
 currentModuleIndex = null;
@@ -665,6 +704,7 @@ function askQuizChoice(i){
       if(currentQuiz !== null){
 quizCompleted[currentQuiz] = true;
 completed[currentQuiz] = true; // keep this for certificate logic
+saveProgress();
         currentQuiz = null;
       }
       const done = completed.filter(Boolean).length;
@@ -1058,6 +1098,7 @@ completed[currentQuiz] = true; // keep this for certificate logic
       });
 
       show('menu');
+loadProgress();
       update();
       initCustomPlayer();
 

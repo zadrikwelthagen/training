@@ -31,6 +31,20 @@
       box-shadow:0 2px 10px rgba(0,0,0,.06);
     }
     .hidden{display:none}
+#quizChoice{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:10002;
+}
+
+#quizChoice.hidden{
+  display:none;
+}
+
     /* Buttons */
     button{
       padding:12px 16px;
@@ -272,7 +286,16 @@
       padding:8px 12px;
       font-size:13px;
     }
-  </style>
+  
+
+
+/* ===== NEW: Module row + Take Quiz button ===== */
+#moduleGrid .moduleRow{display:flex;gap:10px;justify-content:center;align-items:center;width:90%;max-width:520px;}
+#moduleGrid .moduleRow button.moduleBtn{flex:1;min-width:0;width:auto;max-width:none;}
+#moduleGrid .moduleRow button.quizBtn{flex:0 0 auto;width:auto;max-width:none;white-space:nowrap;padding:8px 12px;font-size:13px;background:var(--accent2);} 
+#moduleGrid .moduleRow button.quizBtn:hover{background:var(--accent);} 
+
+</style>
 
   <!-- PDF certificate engine (pdf-lib). Offline-first: tries local pdf-lib.min.js, falls back to CDN. -->
   <script
@@ -300,8 +323,9 @@
 
     /* Modules are freely accessible in any order. Completion is tracked but does not restrict access. */
     let completed = Array(modules.length).fill(false);
+    let quizCompleted = Array(modules.length).fill(false);
+    let moduleCompleted = Array(modules.length).fill(false);
     let currentQuiz = null;
-
     /* ===== Playlist (supports single video OR an array of videos per module) ===== */
     let currentPlaylist = null;
     let playlistIndex = 0;
@@ -353,14 +377,35 @@
         playPlaylistItem();
         return;
       }
-      // Playlist finished → go to quiz for this module
-      const i = currentModuleIndex;
-      currentPlaylist = null;
-      currentModuleIndex = null;
-      playlistIndex = 0;
-      goQuiz(i);
-    }
 
+  // Playlist finished → module completed
+const i = currentModuleIndex;
+
+moduleCompleted[i] = true;   // ✅ THIS IS THE KEY CHANGE
+
+currentPlaylist = null;
+currentModuleIndex = null;
+playlistIndex = 0;
+
+askQuizChoice(i);
+  } 
+
+function askQuizChoice(i){
+  currentQuiz = i;
+  const modal = $('quizChoice');
+  modal.classList.remove('hidden');
+
+  $('quizNowBtn').onclick = () => {
+    modal.classList.add('hidden');
+    goQuiz(i);
+  };
+
+  $('quizLaterBtn').onclick = () => {
+    modal.classList.add('hidden');
+    show('menu');
+    update();
+  };
+}
     /* Audio gate state: menu locked until Intro.mp3 ends */
     let introFinished = false;
     let introStarted = false;
@@ -404,7 +449,7 @@
 
       const gate = $('conclusionGate');
       const msg = $('conclusionGateMsg');
-      if(msg) msg.innerText = 'Conclusion message... (Certificate actions will unlock when the audio finishes)';
+      if(msg) msg.innerText = '(Certificate actions to follow ...)';
 
       const attemptPlay = () => {
         const p = a.play();
@@ -618,7 +663,8 @@
     /* ===== Completion ===== */
     function quizDone(){
       if(currentQuiz !== null){
-        completed[currentQuiz] = true;
+quizCompleted[currentQuiz] = true;
+completed[currentQuiz] = true; // keep this for certificate logic
         currentQuiz = null;
       }
       const done = completed.filter(Boolean).length;
@@ -644,16 +690,45 @@
       grid.innerHTML = '';
 
       modules.forEach((m,i) => {
-        const b = document.createElement('button');
+        // Wrap each module in a row so we can show an optional Take Quiz button
+        const row = document.createElement('div');
+        row.className = 'moduleRow';
 
-        // NEW: Show number of videos on the module button (string => 1, array => length)
+        const b = document.createElement('button');
+        b.className = 'moduleBtn';
+
+        // Video count (kept for reference)
         const videoCount = Array.isArray(m.v) ? m.v.length : 1;
         const videoLabel = videoCount > 1 ? ` (${videoCount} videos)` : ` (1 video)`;
 
-        b.textContent = m.t + (completed[i] ? ' ✓' : '');
+        let label = m.t;
+        if (moduleCompleted[i]) {
+          label = '✅ ' + label;
+          if (quizCompleted[i]) {
+            label += ' (✔️Quiz Completed)';
+          } else {
+            label += ' (⚠️Quiz NOT taken)';
+          }
+        }
+
+        b.textContent = label;
         b.disabled = !isUnlocked(i);
+
+        // NEW behaviour: module button always opens the module video (retake allowed)
         b.onclick = () => loadModule(i);
-        grid.appendChild(b);
+        row.appendChild(b);
+
+        // NEW: show Take Quiz button ONLY when module is completed AND quiz not taken
+        if (moduleCompleted[i] && !quizCompleted[i]) {
+          const qb = document.createElement('button');
+          qb.className = 'quizBtn';
+          qb.type = 'button';
+          qb.textContent = '📝 Take Quiz';
+          qb.onclick = (e) => { e.stopPropagation(); goQuiz(i); };
+          row.appendChild(qb);
+        }
+
+        grid.appendChild(row);
       });
 
       updateCertificateButtons();
@@ -1031,7 +1106,7 @@
   <!-- Conclusion gate overlay -->
   <div id="conclusionGate" class="hidden" aria-live="polite" aria-modal="true" role="dialog">
     <div class="panel">
-      <h2>Course Completed</h2>
+      <h2>✨Course Completed</h2>
       <p id="conclusionGateMsg">Please listen to the conclusion message…</p>
     </div>
   </div>
@@ -1146,7 +1221,7 @@
               box-shadow:0 10px 25px rgba(0,0,0,.15);">
               <strong>Conclusion message playing…</strong>
               <div style="font-size:13px;color:#334155;margin-top:6px;">
-                Certificate actions will unlock when the audio finishes.
+                
               </div>
             </div>
           </div>
@@ -1165,5 +1240,20 @@
       <button onclick="closeNameAlert()">OK</button>
     </div>
   </div>
+<!-- Quiz Choice Modal -->
+<div id="quizChoice" class="hidden">
+  <div class="card" style="max-width:420px;text-align:center">
+    <h3> ✍️ Quiz Time?</h3>
+   
+<p class="hint">
+      Would you like to complete the quiz now or later?
+    </p>
+
+    <div class="row" style="margin-top:14px">
+      <button id="quizNowBtn">📝 Do Quiz Now</button>
+      <button class="secondary" id="quizLaterBtn">⏭ Do Quiz Later</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

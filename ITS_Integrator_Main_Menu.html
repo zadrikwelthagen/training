@@ -46,6 +46,14 @@
 }
 
     /* Buttons */
+/* Smaller Home button on Quiz screen */
+.quiz-home-btn{
+  padding: 6px 10px;        /* smaller than default */
+  font-size: 13px;          /* slightly smaller text */
+  border-radius: 10px;
+  line-height: 1.2;
+}
+
     button{
       padding:12px 16px;
       border:none;
@@ -72,7 +80,7 @@
     #quizFrame{
       width:100%;
       height:40vh;
-      min-height:500px;
+      min-height:490px;
       max-width:900px;
       border-radius:10px;
       border:2px solid var(--brand);
@@ -295,6 +303,62 @@
 #moduleGrid .moduleRow button.quizBtn{flex:0 0 auto;width:auto;max-width:none;white-space:nowrap;padding:8px 12px;font-size:13px;background:var(--accent2);} 
 #moduleGrid .moduleRow button.quizBtn:hover{background:var(--accent);} 
 
+
+
+/* ===== Styled Reset Confirmation Modal (replaces native confirm) ===== */
+#resetConfirmModal{
+  position:fixed; inset:0; background:rgba(0,0,0,0.55);
+  display:flex; align-items:center; justify-content:center;
+  z-index:10003;
+}
+#resetConfirmModal.hidden{display:none;}
+#resetConfirmModal .panel{
+  width:min(520px, 92vw);
+  background:#fff;
+  border:2px solid var(--brand);
+  border-radius:14px;
+  padding:18px 18px 14px;
+  box-shadow:0 20px 50px rgba(0,0,0,.35);
+}
+#resetConfirmModal h3{margin:0 0 8px;color:#0f172a;font-size:18px;}
+#resetConfirmModal p{margin:0;color:#334155;font-size:13px;line-height:1.4;}
+#resetConfirmModal .actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
+#resetConfirmModal .danger{background:#d32f2f;}
+#resetConfirmModal .danger:hover{background:#b71c1c;}
+
+
+
+/* ===== NEW: Post-certificate Reset Mode ===== */
+/* ===== Audio → Certificate → Reset → Exit ===== */
+@keyframes flashExit {
+  0% { box-shadow: 0 0 0 var(--accent); }
+  50% { box-shadow: 0 0 14px var(--accent); }
+  100% { box-shadow: 0 0 0 var(--accent); }
+}
+.flash-exit { animation: flashExit 1s infinite; }
+
+/* ===== NEW: Post-audio exit mode (keeps certificate UI visible) ===== */
+body.postAudioMode #resetExitMsg{display:block !important;}
+body.postAudioMode #completeActions button.secondary{animation:flashExit 1s infinite;}
+/* ===== Post-audio exit mode ===== */
+@keyframes flashExit {
+  0% { box-shadow: 0 0 0 var(--accent); }
+  50% { box-shadow: 0 0 14px var(--accent); }
+  100% { box-shadow: 0 0 0 var(--accent); }
+}
+
+.flash-exit {
+  animation: flashExit 1s infinite;
+}
+
+body.postAudioMode #resetExitMsg {
+  display: block !important;
+}
+
+body.postAudioMode #completeActions button.secondary {
+  animation: flashExit 1s infinite;
+}
+
 </style>
 
   <!-- PDF certificate engine (pdf-lib). Offline-first: tries local pdf-lib.min.js, falls back to CDN. -->
@@ -306,6 +370,60 @@
   <script>
     /* ===== Progress Persistence (localStorage) ===== */
 const STORAGE_KEY = 'ITS_Integrator_Progress_v1';
+const COURSE_COMPLETED_KEY = 'ITS_Integrator_CourseCompleted_v1';
+
+// ===== NEW: Certificate-once then reset + Enter-to-exit =====
+// ===== Audio → Certificate once → Reset → Enter-to-exit =====
+let _certificateUsed = false;
+let _enterBound = false;
+
+function isCourseCompletedAndLocked() {
+  return localStorage.getItem('ITS_Integrator_CourseCompleted_v1') === 'true';
+}
+
+
+
+function disableBrowserExit(){
+  window.onbeforeunload = function(e){
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+  };
+}
+function enableBrowserExit(){
+  window.onbeforeunload = null;
+}
+
+function resetProgressToZero(){
+  localStorage.removeItem(STORAGE_KEY);
+  completed       = Array(modules.length).fill(false);
+  quizCompleted   = Array(modules.length).fill(false);
+  moduleCompleted = Array(modules.length).fill(false);
+  currentQuiz = null;
+  saveProgress();
+}
+
+function bindEnterToExit(){
+  if(_enterBound) return;
+  _enterBound = true;
+  document.addEventListener('keydown', (e)=>{
+    if(!document.body.classList.contains('postAudioMode')) return;
+    const complete = document.getElementById('complete');
+    if(!complete || complete.classList.contains('hidden')) return;
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      exitCourse();
+    }
+  
+});
+}
+function activatePostAudioExitMode(){
+  document.body.classList.add('postAudioMode');
+  const exitBtn = document.querySelector('#completeActions button.secondary');
+  if(exitBtn) exitBtn.classList.add('flash-exit');
+  disableBrowserExit();
+  bindEnterToExit();
+}
 
 function saveProgress() {
   const data = {
@@ -340,6 +458,12 @@ function loadProgress() {
     console.warn('Progress data corrupted, resetting');
     localStorage.removeItem(STORAGE_KEY);
   }
+}
+
+function hasAnyProgress(){
+  return completed.some(Boolean) ||
+         quizCompleted.some(Boolean) ||
+         moduleCompleted.some(Boolean);
 }
 
 /* ===== Asset ===== */
@@ -426,7 +550,12 @@ currentPlaylist = null;
 currentModuleIndex = null;
 playlistIndex = 0;
 
-askQuizChoice(i);
+if (!quizCompleted[i]) {
+  askQuizChoice(i);
+} else {
+  show('menu');
+  update();
+}
   } 
 
 function askQuizChoice(i){
@@ -443,6 +572,31 @@ function askQuizChoice(i){
     modal.classList.add('hidden');
     show('menu');
     update();
+
+  // Wire Reset confirmation modal buttons
+  // ===== Reset Confirmation Modal wiring (robust) =====
+document.addEventListener('DOMContentLoaded', () => {
+
+  const modal   = $('resetConfirmModal');
+  const confirm = $('resetConfirmBtn');
+  const cancel  = $('resetCancelBtn');
+
+  if (!modal || !confirm || !cancel) return;
+
+  
+  // Click outside panel closes modal
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeResetConfirm();
+  });
+
+  // ESC closes modal
+  document.addEventListener('keydown', (e) => {
+    if (!_resetConfirmOpen) return;
+    if (e.key === 'Escape') closeResetConfirm();
+  });
+
+});
+
   };
 }
     /* Audio gate state: menu locked until Intro.mp3 ends */
@@ -504,7 +658,7 @@ function askQuizChoice(i){
         gate.onclick = attemptPlay;
       }
 
-      a.onended = () => { conclusionLocked=false; lockCompletionUI(false); };
+      a.onended = () => { conclusionLocked=false; lockCompletionUI(false); activatePostAudioExitMode(); };
       a.onerror = () => { conclusionLocked=false; lockCompletionUI(false); };
       attemptPlay();
     }
@@ -541,7 +695,11 @@ function askQuizChoice(i){
 
       // conclusion lock/audio management
       if(view === 'complete'){
-        // Make sure actions are visible but locked immediately
+   // NEW: ensure certificate is available before reset is triggered
+   document.body.classList.remove('postAudioMode');
+   _certificateUsed = false;
+   enableBrowserExit();
+   // Make sure actions are visible but locked immediately
         lockCompletionUI(true);
         playConclusionAudio();
       }else{
@@ -692,7 +850,8 @@ function askQuizChoice(i){
 
     /* ===== Quiz ===== */
     function goQuiz(i){
-      currentQuiz = i;
+  if (isCourseCompletedAndLocked()) return; // ✅ hard lock quizzes    
+ currentQuiz = i;
       show('quiz');
       $('quizFrame').src = modules[i].q;
       $('quizTitle').innerText = modules[i].t + ' – Quiz';
@@ -708,7 +867,9 @@ saveProgress();
         currentQuiz = null;
       }
       const done = completed.filter(Boolean).length;
-      if(done === modules.length){
+      if(done === modules.length)
+{
+localStorage.setItem(COURSE_COMPLETED_KEY, 'true');
         show('complete');
         updateCertificateButtons();
         return;
@@ -721,10 +882,51 @@ saveProgress();
     function update(){
       const done = completed.filter(Boolean).length;
       const total = modules.length;
+// ✅ Hide pre-completion instructions after course completion
+  const preInfo = document.getElementById('preCompletionInfo');
+  if (preInfo) {
+    const completedAck =
+      done === total &&
+      localStorage.getItem('ITS_Integrator_CourseCompleted_v1') === 'true';
+
+    preInfo.style.display = completedAck ? 'none' : 'block';
+  }
+// ✅ Hide progress bar after course completion
+const progressCard = document.getElementById('progressCard');
+if (progressCard) {
+  const completedAck =
+    done === total &&
+    localStorage.getItem('ITS_Integrator_CourseCompleted_v1') === 'true';
+
+  progressCard.style.display = completedAck ? 'none' : 'block';
+}
+// ✅ Show completion badge if course was completed
+  const badge = document.getElementById('courseCompletedBadge');
+  if (badge) {
+    const completedAck = localStorage.getItem(COURSE_COMPLETED_KEY) === 'true';
+    badge.style.display = completedAck ? 'block' : 'none';
+  }
+// ✅ Auto-go to conclusion when progress is 100%
+if (done === total) {
+  const completedAck = localStorage.getItem(COURSE_COMPLETED_KEY) === 'true';
+
+  if (!completedAck && !exitedCompletion) {
+    show('complete');
+    updateCertificateButtons();
+    return;
+  }
+}
+const resetBtn = $('resetProgressBtn');
+if (resetBtn) {
+  resetBtn.style.display = done > 0 ? 'inline-flex' : 'none';
+}
       const pct = Math.round((done/total)*100);
       $('progressFill').style.width = pct + '%';
       $('progressPct').innerText = pct + '%';
-      $('progressText').innerText = `Progress: ${done} of ${total} modules completed`;
+      
+$('progressLabel').innerText =
+  `Progress: ${done} of ${total} modules completed`;
+``
 
       const grid = $('moduleGrid');
       grid.innerHTML = '';
@@ -741,15 +943,23 @@ saveProgress();
         const videoCount = Array.isArray(m.v) ? m.v.length : 1;
         const videoLabel = videoCount > 1 ? ` (${videoCount} videos)` : ` (1 video)`;
 
-        let label = m.t;
-        if (moduleCompleted[i]) {
-          label = '✅ ' + label;
-          if (quizCompleted[i]) {
-            label += ' (✔️Quiz Completed)';
-          } else {
-            label += ' (⚠️Quiz NOT taken)';
-          }
-        }
+let label = m.t;
+
+if (moduleCompleted[i]) {
+  if (isCourseCompletedAndLocked()) {
+    label = '⏯️' + label;
+  } else {
+    label = '✅ ' + label;
+  }
+
+  if (!isCourseCompletedAndLocked()) {
+    if (quizCompleted[i]) {
+      label += ' (✔️Quiz Completed)';
+    } else {
+      label += ' (⚠️Quiz NOT taken)';
+    }
+  }
+}
 
         b.textContent = label;
         b.disabled = !isUnlocked(i);
@@ -759,15 +969,15 @@ saveProgress();
         row.appendChild(b);
 
         // NEW: show Take Quiz button ONLY when module is completed AND quiz not taken
-        if (moduleCompleted[i] && !quizCompleted[i]) {
-          const qb = document.createElement('button');
-          qb.className = 'quizBtn';
-          qb.type = 'button';
-          qb.textContent = '📝 Take Quiz';
-          qb.onclick = (e) => { e.stopPropagation(); goQuiz(i); };
-          row.appendChild(qb);
-        }
 
+if (moduleCompleted[i] && !quizCompleted[i] && !isCourseCompletedAndLocked()) {
+  const qb = document.createElement('button');
+  qb.className = 'quizBtn';
+  qb.type = 'button';
+  qb.textContent = '📝 Take Quiz';
+  qb.onclick = (e) => { e.stopPropagation(); goQuiz(i); };
+  row.appendChild(qb);
+}
         grid.appendChild(row);
       });
 
@@ -913,6 +1123,7 @@ saveProgress();
     let certTemplateBytes = null;
     let lastGeneratedUrl = null;
     let lastGeneratedBlob = null;
+    let exitedCompletion = false;
 
     function setCertStatus(msg){
       const el = $('certStatus');
@@ -958,7 +1169,7 @@ saveProgress();
       if(download) download.disabled = !complete || !lastGeneratedBlob || !!conclusionLocked;
 
       if(!complete){
-        setCertStatus('Certificate locked until all modules are completed (100%).');
+        setCertStatus('');
         clearPreview();
       }
     }
@@ -1075,49 +1286,123 @@ saveProgress();
       const a = document.createElement('a');
       a.href = lastGeneratedUrl;
       a.download = `ITS_Integrator_Certificate_${safe}.pdf`;
-      document.body.appendChild(a);
-      a.click();
+      document.body.appendChild(a);      a.click();
       a.remove();
-    }
+
+}
 
     /* ===== Exit (browser-safe) ===== */
-    function exitCourse(){
-      if(conclusionLocked) return;
-      window.close();
-      setTimeout(() => { location.replace('about:blank'); }, 100);
-    }
+function exitCourse(){
+  if (typeof conclusionLocked !== 'undefined' && conclusionLocked) return;
 
-    /* ===== On load ===== */
-    window.addEventListener('load', () => {
-      window.addEventListener('beforeunload', (e)=>{
-        if(typeof conclusionLocked !== 'undefined' && conclusionLocked){
-          e.preventDefault();
-          e.returnValue='';
-          return '';
-        }
-      });
+  // ✅ Mark course as completed AND acknowledged
+  localStorage.setItem(COURSE_COMPLETED_KEY, 'true');
 
-      show('menu');
-loadProgress();
-      update();
-      initCustomPlayer();
+  // ✅ Update runtime state
+  exitedCompletion = true;
 
-      loadTemplateFromServer().then(ok => {
-        if(!ok) initCertificateTemplate();
-      });
+  // ✅ Stop completion UI and audio
+  stopConclusionAudio();
+  document.body.classList.remove('postAudioMode');
+  document.getElementById('conclusionGate')?.classList.add('hidden');
 
-      $('audioGate').classList.remove('hidden');
-      setGateMessage('Click Start to play introduction audio');
+  // ✅ VERY IMPORTANT: allow browser exit again
+  
 
-      $('skipIntroBtn').disabled = false;
-      $('skipIntroBtn').addEventListener('click', (e) => { e.preventDefault(); skipIntro(); });
+  // ✅ Return to Main Menu
+  show('menu');
+  update();
+}
+// ===== Reset Progress (Styled modal) =====
+let _resetConfirmOpen = false;
 
-      resetIntroUI();
-      $('startBtn').addEventListener('click', (e) => {
-        e.preventDefault();
-        startIntroAudio();
-      });
+function openResetConfirm(){
+  const modal = $('resetConfirmModal');
+  if(!modal) return;
+  _resetConfirmOpen = true;
+  modal.classList.remove('hidden');
+  $('resetConfirmBtn')?.focus();
+}
+function closeResetConfirm(){
+  const modal = $('resetConfirmModal');
+  if(!modal) return;
+  _resetConfirmOpen = false;
+  modal.classList.add('hidden');
+}
+function doResetProgress(){
+  localStorage.removeItem(STORAGE_KEY);
+  closeResetConfirm();
+  location.reload();
+}
+function resetProgress(){
+  openResetConfirm();
+}
+
+function exitQuizLater() {
+  // Do exactly what "⏭ Do Quiz Later" does
+  currentQuiz = null;
+  show('menu');
+  update();
+}
+
+// ===== Quiz iframe EXIT integration (safe) =====
+// Called when quiz iframe signals exit
+function exitQuizFromIframe(){
+  if (currentQuiz !== null){
+    quizCompleted[currentQuiz] = true;
+    completed[currentQuiz] = true;
+    saveProgress();
+    currentQuiz = null;
+  }
+  show('menu');
+  update();
+}
+
+window.addEventListener('message', (event) => {
+  const d = event.data;
+  if (d === 'ITS_QUIZ_EXIT' || (d && d.type === 'ITS_QUIZ_EXIT')){
+    exitQuizFromIframe();
+  }
+});
+
+/* ===== On load ===== */
+window.addEventListener('load', () => {
+  
+
+  loadProgress();
+  update();
+  initCustomPlayer();
+
+  loadTemplateFromServer().then(ok => {
+    if(!ok) initCertificateTemplate();
+  });
+
+  // ✅ INTRO RULE:
+  // Show intro ONLY if there is no existing progress
+  if (hasAnyProgress()) {
+    // Skip intro entirely
+    $('audioGate').classList.add('hidden');
+    show('menu');
+  } else {
+    // Fresh user: show intro
+    show('menu');
+    $('audioGate').classList.remove('hidden');
+    setGateMessage('Click Start to play introduction audio');
+
+    $('skipIntroBtn').disabled = false;
+    $('skipIntroBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      skipIntro();
     });
+
+    resetIntroUI();
+
+    $('startBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      startIntroAudio();
+    });
+  }
+});
   </script>
 </head>
 
@@ -1161,15 +1446,41 @@ loadProgress();
         <div class="progress"><div id="progressFill"></div></div>
         <div id="progressPct" class="pct">0%</div>
       </div>
-      <div id="progressText" class="hint" style="text-align:center;margin-top:6px">
-        Progress: 0 of 6 modules completed
-      </div>
+<div id="progressText"
+     class="hint"
+     style="text-align:center;margin-top:6px;display:flex;gap:10px;justify-content:center;align-items:center;">
+  <span id="progressLabel">
+    Progress: 0 of 6 modules completed
+  </span>
+
+  <button id="resetProgressBtn"
+          class="secondary"
+          style="padding:4px 10px;font-size:12px;"
+          onclick="resetProgress()"
+          title="Reset all course progress">
+    🔄 Reset
+  </button>
+</div>
     </div>
 
     <!-- MENU -->
     <div id="menu" class="card">
       <h2 style="text-align:center">Main Menu</h2>
-      <div class="menuHeadingWrap">
+<div id="courseCompletedBadge"
+     class="hint"
+     style="display:none;
+            margin:8px auto;
+            text-align:center;
+            background:#e8f5e9;
+            border:1px solid #66bb6a;
+            color:#1b5e20;
+            padding:6px 12px;
+            border-radius:999px;
+            font-weight:bold;">
+  ✔ Course Completed
+</div>
+<div id="preCompletionInfo">      
+<div class="menuHeadingWrap">
         <div class="menuHeading hint">
           <div class="mh-line">
             This course provides a basic technical overview of the ITS Integrator, covering its modular infrastructure, including:
@@ -1190,13 +1501,14 @@ loadProgress();
           padding:6px 10px;border-radius:999px;font-weight:bold;font-size:13px;">
           All modules must to be completed (100%) before the Certificate of Completion will be issued.
         </span>
-        <div style="margin-top:6px;font-size:12px;color:#555;">You may complete modules in any order, but it is recommeded that the modules are completed in the sequence below.
+        <div style="margin-top:6px;font-size:12px;color:#555;">You may complete modules in any order, but it is recommended that the modules are completed in the sequence below.
         </div>
       </div>
+</div>
+
 
       <div id="moduleGrid"></div>
     </div>
-
     <!-- PLAYER -->
     <div id="player" class="card hidden">
       <h2 id="title" style="text-align:center"></h2>
@@ -1220,14 +1532,18 @@ loadProgress();
       <h2 id="quizTitle" style="text-align:center"></h2>
       <iframe id="quizFrame"></iframe>
       <div class="row" style="margin-top:12px">
-        <button onclick="quizDone()">✅ Done (Module completed)</button>
-        <button class="secondary" onclick="show('menu')">🏠 Home (Module will NOT complete)</button>
+
+<button class="secondary quiz-home-btn" onclick="exitQuizLater()">
+  🏠 Home (Quiz not completed)
+</button
+        
       </div>
     </div>
 
     <!-- COMPLETION PAGE -->
     <div id="complete" class="card hidden">
       <h2 style="text-align:center">Course Completed</h2>
+  <div id="resetExitMsg" class="hint" style="text-align:center;font-size:16px;font-weight:bold;display:none;margin:12px auto;"></div>
       <p class="hint" style="font-size:14px;color:#222;max-width:820px;margin:0 auto;">
         The objective of this course was to provide you with a foundational understanding of the technical components of the ITS Integrator system and the way its various software elements interact.
         <br><br>
@@ -1245,7 +1561,7 @@ loadProgress();
         </label>
         <button id="previewCertBtn" onclick="previewCertificate()">👁 Preview Certificate</button>
         <button id="downloadCertBtn" onclick="downloadCertificate()" disabled>⬇ Download Certificate</button>
-        <button class="secondary" onclick="exitCourse()">🚪 Exit</button>
+        <button class="secondary" onclick="exitCourse()">🚪 Return to main menu (Course Completed)</button>
       </div>
 
       <div id="certStatus" class="hint" style="text-align:center;margin-top:10px">
@@ -1296,5 +1612,32 @@ loadProgress();
     </div>
   </div>
 </div>
+
+
+<!-- Reset Confirmation Modal -->
+<div id="resetConfirmModal" class="hidden" aria-live="polite" aria-modal="true" role="dialog">
+  <div class="panel" role="document">
+    <h3>Reset course progress</h3>
+    <p id="resetConfirmMsg">Please confirm that you want to reset all course progress. This action cannot be undone.</p>
+    <div class="actions">
+      <button
+  id="resetConfirmBtn"
+  class="danger"
+  type="button"
+  onclick="doResetProgress()">
+  Yes, reset
+</button>
+
+<button
+  id="resetCancelBtn"
+  class="secondary"
+  type="button"
+  onclick="closeResetConfirm()">
+  Cancel
+</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

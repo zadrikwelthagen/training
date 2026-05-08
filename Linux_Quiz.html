@@ -352,9 +352,9 @@ window.retake = ()=>{
   render();
 }
 
-window.exitProgram = ()=>{
-  document.body.innerHTML = '<div class="wrap"><div class="card"><h2>Quiz exited</h2><p>Enter the ✅ Done (Module completed) if you finished the quiz.</p></div></div>';
-}
+window.exitProgram = () => {
+  window.parent.postMessage({ type: 'ITS_QUIZ_EXIT' }, '*');
+};
 
 render();
 </script>

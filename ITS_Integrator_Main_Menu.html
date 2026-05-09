@@ -481,12 +481,12 @@ function hasAnyProgress(){
 
     /* ===== Modules ===== */
     const modules = [
-      {t:'General Infrastructure',v:'ITS Integrator Basic Training_General_Infra.mp4',q:'General_info_Quiz.html'},
-      {t:'Linux Operating System',v:'ITS Integrator Basic Training_Linux.mp4',q:'Linux_Quiz.html'},
-      {t:'Oracle Database Management System',v:['DBMS_1.mp4','DBMS_2.mp4','DBMS_3.mp4'],q:'DBMS_Quiz.html'},
-      {t:'Oracle Application Fusion Middleware',v:'ITS Integrator Basic Training_Oracle_FMW.mp4',q:'FMW_Quiz.html'},
-      {t:'ITS Integrator Application',v:['ITS_Linux.mp4','ITS_naming.mp4','ITS_users.mp4'],q:'Integrator_App_Quiz.html'},
-      {t:'Administration',v:['Admin_intro.mp4','Admin_housekeeping.mp4','Admin_builds.mp4','Admin_backup.mp4','Admin_oracle.mp4'],q:'Admin_Quiz.html'}
+      {t:'⏯️ General Infrastructure',v:'ITS Integrator Basic Training_General_Infra.mp4',q:'General_info_Quiz.html'},
+      {t:'⏯️ Linux Operating System',v:'ITS Integrator Basic Training_Linux.mp4',q:'Linux_Quiz.html'},
+      {t:'⏯️ Oracle Database Management System',v:['DBMS_1.mp4','DBMS_2.mp4','DBMS_3.mp4'],q:'DBMS_Quiz.html'},
+      {t:'⏯️ Oracle Application Fusion Middleware',v:'ITS Integrator Basic Training_Oracle_FMW.mp4',q:'FMW_Quiz.html'},
+      {t:'⏯️ ITS Integrator Application',v:['ITS_Linux.mp4','ITS_naming.mp4','ITS_users.mp4'],q:'Integrator_App_Quiz.html'},
+      {t:'⏯️ Administration',v:['Admin_intro.mp4','Admin_housekeeping.mp4','Admin_builds.mp4','Admin_backup.mp4','Admin_oracle.mp4'],q:'Admin_Quiz.html'}
     ];
 
     /* Modules are freely accessible in any order. Completion is tracked but does not restrict access. */
@@ -963,7 +963,7 @@ let label = m.t;
 
 if (moduleCompleted[i]) {
   if (isCourseCompletedAndLocked()) {
-    label = '⏯️' + label;
+    label = '🔄' + label;
   } else {
     label = '✅ ' + label;
   }
@@ -1308,24 +1308,19 @@ if (moduleCompleted[i] && !quizCompleted[i] && !isCourseCompletedAndLocked()) {
 }
 
     /* ===== Exit (browser-safe) ===== */
+
 function exitCourse(){
   if (typeof conclusionLocked !== 'undefined' && conclusionLocked) return;
 
-  // ✅ Mark course as completed AND acknowledged
   localStorage.setItem(COURSE_COMPLETED_KEY, 'true');
-
-  // ✅ Update runtime state
   exitedCompletion = true;
 
-  // ✅ Stop completion UI and audio
   stopConclusionAudio();
   document.body.classList.remove('postAudioMode');
   document.getElementById('conclusionGate')?.classList.add('hidden');
 
-  // ✅ VERY IMPORTANT: allow browser exit again
-  
+  enableBrowserExit(); // ✅ THIS FIXES THE WARNING
 
-  // ✅ Return to Main Menu
   show('menu');
   update();
 }
@@ -1530,6 +1525,8 @@ window.addEventListener('load', () => {
       <h2 id="quizTitle" style="text-align:center"></h2>
       <iframe id="quizFrame"></iframe>
       <div class="row" style="margin-top:12px">
+ <button onclick="quizDone()">✅ Done (Module completed)</button>
+
 <button class="secondary" onclick="exitQuizLikeLater()">
   🏠 Home (Quiz not completed)
 </button>

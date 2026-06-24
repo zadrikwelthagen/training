@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CYBER SECURITY FIELD GUIDE - Module 1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- ✅ ADD THIS LINE -->
+  <script src="valid_users.js"></script>
+<script src="certificateData.js"></script>
+  <style>
+    :root{
+      --brand:#003366;
+      --accent:#00B0F0;
+      --accent2:#008cc1;
+      --muted:#6c757d;
+      --panel:rgba(0,0,0,.72);
+      --panelBorder:rgba(255,255,255,.22);
+      --text:#ffffff;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Arial, sans-serif;
+      color:var(--text);
+      background:url('bg-cyber.jpg') center/cover no-repeat fixed;
+      overflow:hidden;
+    }
+
+    header{
+      position:fixed;
+      top:0;left:0;right:0;
+      height:60px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:var(--brand);
+      color:#fff;
+      z-index:5000;
+      box-shadow:0 2px 10px rgba(0,0,0,.25);
+    }
+    header h1{margin:0;font-size:18px;letter-spacing:.2px}
+
+    .screen{
+      position:fixed;
+      inset:60px 0 0 0;
+      display:none;
+      z-index:1000;
+      overflow:auto;
+    }
+    .screen.active{display:block}
+
+    /* MAIN MENU */
+    #menu{
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    #menu.active{display:flex}
+
+    .menu-card, .quiz-card, .complete-card, .modal-card{
+      width:min(960px, 96vw);
+      border-radius:18px;
+      border:1px solid var(--panelBorder);
+      box-shadow:0 12px 38px rgba(0,0,0,.45);
+      backdrop-filter:blur(4px);
+    }
+    .menu-card{
+      max-width:820px;
+      width:100%;
+      text-align:center;
+      padding:30px 26px;
+      background:rgba(0,0,0,.78);
+      color:#fff;
+    }
+    .menu-card h2{
+      margin:0 0 8px;
+      font-size:30px;
+      text-shadow:0 2px 8px rgba(0,0,0,.8);
+    }
+    .menu-card .subtitle{
+      margin:0 0 16px;
+      font-size:20px;
+      color:#e6f6ff;
+    }
+    .menu-heading{
+      max-width:820px;
+      margin:12px auto 0;
+      color:#fff;
+      text-shadow:0 2px 6px rgba(0,0,0,.7);
+      font-size:14px;
+      line-height:1.45;
+    }
+    .menu-heading .mh-line{margin:6px 0}
+    .menu-heading .mh-item{margin:4px 0}
+    .notice{
+      display:inline-block;
+      margin-top:16px;
+      padding:10px 14px;
+      border-radius:18px;
+      border:1px solid #b6d7ff;
+      background:#e7f3ff;
+      color:#003366;
+      font-weight:bold;
+      font-size:13px;
+      line-height:1.35;
+    }
+    .start-wrap{margin-top:18px}
+    .start-btn{
+      border:none;
+      border-radius:12px;
+      cursor:pointer;
+      color:#fff;
+      font-family:inherit;
+      font-size:18px;
+      font-weight:bold;
+      padding:16px 28px;
+      min-width:300px;
+      background:linear-gradient(145deg, #00c6ff, #007fa6);
+      box-shadow:
+        0 6px 0 #005f7a,
+        0 10px 20px rgba(0,0,0,.40);
+      transition:all .16s ease;
+    }
+    .start-btn:hover{
+      transform:translateY(-2px);
+      box-shadow:
+        0 8px 0 #005f7a,
+        0 0 18px rgba(0,176,240,.55),
+        0 14px 28px rgba(0,0,0,.50);
+    }
+    .start-btn:active{
+      transform:translateY(4px);
+      box-shadow:
+        0 2px 0 #005f7a,
+        0 6px 12px rgba(0,0,0,.30);
+    }
+    .module-status{margin-top:16px;font-size:14px;color:#d7efff}
+
+    button, .secondary-btn, .danger-btn, .primary-btn{
+      border:none;
+      border-radius:10px;
+      cursor:pointer;
+      color:#fff;
+      font-family:inherit;
+      transition:.2s ease;
+      padding:10px 14px;
+      font-size:14px;
+    }
+    .primary-btn, button{background:var(--accent)}
+    .primary-btn:hover, button:hover{background:var(--accent2)}
+    .secondary-btn{background:var(--muted)}
+    .danger-btn{background:#d32f2f}
+    .danger-btn:hover{background:#b71c1c}
+    button:disabled{background:#8fb9ca;cursor:not-allowed}
+    .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center}
+    .hint{font-size:13px;line-height:1.4;color:#dbeafe}
+
+    /* PLAYER SCREEN */
+    #player{
+      background:rgba(0,0,0,.90);
+      padding:16px;
+    }
+    .player-stage{
+      width:min(1320px, 98vw);
+      margin:0 auto;
+      height:calc(100dvh - 92px);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .player-title{
+      margin:0;
+      text-align:center;
+      font-size:22px;
+      color:#fff;
+      flex:0 0 auto;
+    }
+    .player-frame{
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .player-viewport{
+      flex:1 1 auto;
+      min-height:0;
+      width:100%;
+      border-radius:14px;
+      border:2px solid var(--brand);
+      overflow:hidden;
+      position:relative;
+
+display: flex;
+  align-items: center;
+  justify-content: center;
+  background: black;
+
+    }
+    #video{
+      width:100%;
+      height:100%;
+      display:block;
+      background:#000;
+      object-fit:contain;
+max-width: 95%;
+  max-height: 95%;
+
+    }
+    .controls-bar{
+      position:relative;
+      width:100%;
+      background:rgba(0,0,0,.85);
+      border-radius:12px;
+      padding:8px 10px;
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:8px;
+      flex:0 0 auto;
+    }
+    .controls-bar button{padding:8px 12px;font-size:13px}
+    .controls-bar .secondary-btn{background:#64748b;color:#fff}
+    .time-text{min-width:110px;text-align:center;font-variant-numeric:tabular-nums;font-size:12px}
+    .range{
+      flex:1 1 320px;
+      -webkit-appearance:none;
+      appearance:none;
+      height:4px;
+      border-radius:999px;
+      background:#334155;
+      outline:none;
+      min-width:180px;
+    }
+    .range::-webkit-slider-thumb{
+      -webkit-appearance:none;
+      appearance:none;
+      width:14px;height:14px;border-radius:50%;
+      background:var(--accent);
+      border:2px solid #fff;
+      cursor:pointer;
+    }
+    .range::-moz-range-thumb{
+      width:14px;height:14px;border-radius:50%;
+      background:var(--accent);
+      border:2px solid #fff;
+      cursor:pointer;
+    }
+
+    /* FULLSCREEN - target the whole player frame so video + controls scale together */
+    #playerFrame:fullscreen,
+    #playerFrame:-webkit-full-screen,
+    #playerFrame:-ms-fullscreen{
+      width:100vw;
+      height:100dvh;
+      border:none;
+      border-radius:0;
+      margin:0;
+      background:#000;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    #playerFrame:fullscreen .player-viewport,
+    #playerFrame:-webkit-full-screen .player-viewport,
+    #playerFrame:-ms-fullscreen .player-viewport{
+      flex:1 1 auto;
+      min-height:0;
+      width:100%;
+      border:none;
+      border-radius:0;
+    }
+ 
+#playerFrame:fullscreen #video {
+  max-width: 95%;
+  max-height: 95%;
+  object-fit: contain;
+}
+    #playerFrame:-webkit-full-screen #video,
+    #playerFrame:-ms-fullscreen #video{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+    #playerFrame:fullscreen .controls-bar,
+    #playerFrame:-webkit-full-screen .controls-bar,
+    #playerFrame:-ms-fullscreen .controls-bar{
+      width:100%;
+      border-radius:14px;
+      padding:10px 12px;
+    }
+
+    /* QUIZ / COMPLETE */
+    #quiz, #complete{background:rgba(0,0,0,.86);padding:18px}
+    .quiz-card, .complete-card{
+      margin:0 auto;
+      padding:20px;
+      background:rgba(0,0,0,.72);
+      color:#fff;
+    }
+    .quiz-title, .complete-title{margin:0 0 14px;text-align:center;font-size:22px;color:#fff}
+    iframe#quizFrame, iframe#certPreviewFrame{
+      width:100%;
+      border-radius:12px;
+      border:2px solid var(--brand);
+      background:#fff;
+      display:block;
+      margin:0 auto;
+    }
+    iframe#quizFrame{height:min(68vh, 750px); min-height:480px}
+    iframe#certPreviewFrame{height:min(72vh, 820px); min-height:520px}
+    .complete-card p{color:#f8fafc}
+    input[type="text"], input:not([type]){
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid #cbd5e1;
+      min-width:280px;
+      font-size:14px;
+    }
+    .upload-label{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:12px 16px;
+      border-radius:10px;
+      background:var(--muted);
+      color:#fff;
+      cursor:pointer;
+      font-size:14px;
+    }
+    .upload-label input{display:none}
+    .status{margin-top:10px;text-align:center;color:#dbeafe;font-size:13px}
+    .locked{opacity:.45;filter:grayscale(35%);pointer-events:none}
+    #certPreviewWrap{position:relative}
+    #certPreviewLock{
+      position:absolute;
+      inset:0;
+      background:rgba(255,255,255,.70);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      border-radius:12px;
+      color:#0f172a;
+      text-align:center;
+      padding:16px;
+    }
+    #certPreviewLock.active{display:flex}
+
+    /* OVERLAYS */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.58);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:6000;
+      padding:18px;
+    }
+    .overlay.active{display:flex}
+    .modal-card{
+      width:min(520px, 94vw);
+      padding:18px;
+      background:#fff;
+      color:#0f172a;
+      border:2px solid var(--brand);
+    }
+    .modal-card h3{margin:0 0 10px}
+    .modal-card p{margin:0;color:#334155;line-height:1.45}
+
+    @media (max-width: 768px){
+      .menu-card h2{font-size:24px}
+      .menu-card .subtitle{font-size:18px}
+      .start-btn{width:100%;min-width:0}
+      .player-stage{height:calc(100dvh - 84px)}
+      iframe#quizFrame{min-height:420px}
+      input[type="text"], input:not([type]){min-width:220px;width:100%}
+    }
+
+button[onclick="quizDone()"]{
+  display:none;
+}
+
+  </style>
+  <script src="pdf-lib.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';"></script>
+
+
+<script>
+    const STORAGE_KEY = 'CSFG_Progress_v3';
+    const COURSE_COMPLETED_KEY = 'CSFG_CourseCompleted_v3';
+    const CONCLUSION_AUDIO = 'Conclusion_Msg.mp3';
+    const CERT_TEMPLATE_FILENAME = 'Certificate.pdf';
+    const modules = [
+      { t:'Cyber Security Fundamentals',v:['CSFG - Module I - Intro.mp4','CSFG - Module I - CS.mp4','CSFG - Module I - CIA.mp4','CSFG - Module I - Domain.mp4','CSFG - Module I - Evolution.mp4','CSFG - Module I - Understand.mp4','CSFG - Module I - CIA_PPT.mp4','CSFG - Module I - HFW.mp4','CSFG - Module I - Conclusion.mp4'], q:'CSFG_M1_Quiz.html' }
+    ];
+
+    let completed = Array(modules.length).fill(false);
+    let quizCompleted = Array(modules.length).fill(false);
+    let moduleCompleted = Array(modules.length).fill(false);
+    let currentQuiz = null;
+    let currentPlaylist = null;
+    let playlistIndex = 0;
+    let currentModuleIndex = null;
+    let isSeeking = false;
+    let conclusionLocked = false;
+    let certTemplateBytes = null;
+    let lastGeneratedUrl = null;
+    let lastGeneratedBlob = null;
+    let systemAlertContext = null;
+
+
+    const $ = id => document.getElementById(id);
+function showSystemAlert(message) {
+  const el = document.getElementById('systemAlertMsg');
+  if (el) el.textContent = message;
+  document.getElementById('systemAlert').classList.add('active');
+}
+
+
+
+function closeSystemAlert() {
+  document.getElementById('systemAlert').classList.remove('active');
+}
+
+function showEnrolmentPopup() {
+  document.getElementById('enrolmentPopup').classList.add('active');
+  document.getElementById('enrolNameInput').focus();
+}
+
+function updateNoticeMessage(){
+  const notice = document.getElementById('courseNotice');
+  if (!notice) return;
+
+  const courseDone = isCourseCompletedAndLocked();
+
+  if (courseDone) {
+    notice.innerHTML = `
+      <strong>✅ The Certificate of Completion has been issued.</strong>
+    `;
+  } else {
+    notice.innerHTML = `
+      <strong>This module includes a quiz for knowledge assessment</strong><br>
+      <strong>The module must be completed (100%) including quiz before the Certificate of Completion will be issued.</strong>
+    `;
+  }
+}
+
+function updateCourseContent(){
+  const container = document.getElementById('courseContent');
+  if (!container) return;
+
+  const courseDone = isCourseCompletedAndLocked();
+
+  if (courseDone) {
+    container.innerHTML = `
+      <div class="mh-line">
+        <strong style="color:#fff;font-size:15px;">Conclusion:</strong>
+      </div>
+      <div class="mh-item">
+        The objective of this course was to provide you with the understanding that cyber security is a business-critical discipline built on foundational principles, supported by people, processes, and technology, and delivered through interconnected security domains that strengthen organizational resilience.
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="mh-line">
+        <strong style="color:#fff;font-size:15px;">Learning objectives:</strong>
+      </div>
+      <div class="mh-item">Explain cyber security in business terms.</div>
+      <div class="mh-item">Describe the CIA Triad and the People, Process, and Technology model.</div>
+      <div class="mh-item">Identify the purpose of key cyber security domains.</div>
+      <div class="mh-item">Recognise why training and awareness are critical to organisational resilience.</div>
+    `;
+  }
+}
+
+
+function confirmEnrolment() {
+const code = document.getElementById('enrolCodeInput').value.trim().toUpperCase();
+
+if (!code) {
+  alert("Please enter your access code.");
+  return;
+}
+
+// 🔐 Validate access code
+const learner = validUsers[code];
+
+if (!learner) {
+  document.getElementById('enrolmentPopup').classList.remove('active');
+
+  systemAlertContext = 'enrolment';
+  showSystemAlert(
+    "Invalid access code. Please contact support."
+  );
+  return;
+}
+
+// ✅ Build full name
+const fullName = learner.name + " " + learner.surname;
+  // ✅ Save name properly (merge with existing progress)
+  const existing = JSON.parse(localStorage.getItem('CSFG_Progress_v3') || '{}');
+
+existing.learnerName = fullName;
+
+  localStorage.setItem('CSFG_Progress_v3', JSON.stringify(existing));
+
+  // ✅ Pre-fill certificate field
+  const learnerField = document.getElementById('learnerName');
+if (learnerField) learnerField.value = fullName;
+updateWelcomeMessage(fullName);
+
+  // ✅ Close popup
+  document.getElementById('enrolmentPopup').classList.remove('active');
+
+  // ✅ Stay on menu (DO NOT start course)
+  show('menu');
+}
+
+    function fmtTime(sec){
+      if(!isFinite(sec)) return '0:00';
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60).toString().padStart(2,'0');
+      return `${m}:${s}`;
+    }
+
+    function saveProgress(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        completed,
+        quizCompleted,
+        moduleCompleted,
+        learnerName: $('learnerName')?.value || ''
+      }));
+    }
+
+    function loadProgress(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return;
+      try{
+        const data = JSON.parse(raw);
+        if(Array.isArray(data.completed)) completed = data.completed;
+        if(Array.isArray(data.quizCompleted)) quizCompleted = data.quizCompleted;
+        if(Array.isArray(data.moduleCompleted)) moduleCompleted = data.moduleCompleted;
+        if(data.learnerName && $('learnerName')) $('learnerName').value = data.learnerName;
+      }catch(e){
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+
+    function isCourseCompletedAndLocked(){
+      return localStorage.getItem(COURSE_COMPLETED_KEY) === 'true';
+    }
+
+function updateMenuStatus(){
+  const status = $('moduleStatus');
+  const takeQuizBtn = $('takeQuizBtn');
+  const startBtn = document.querySelector('#startButtons button'); // Start button
+  const certBtn = document.getElementById('downloadCertMenuBtn');
+
+  if(!status) return;
+
+  const quizLocked = localStorage.getItem('CSFG_M1_QUIZ_LOCKED') === 'true';
+  const courseDone = isCourseCompletedAndLocked();
+
+  if(courseDone){
+    status.textContent = '✅ Course completed.';
+
+    // ✅ Hide start button
+    if(startBtn) startBtn.style.display = 'none';
+
+    // ✅ Show certificate download
+    if(certBtn) certBtn.style.display = 'inline-block';
+
+    if(takeQuizBtn) takeQuizBtn.style.display = 'none';
+
+  } else if (quizLocked){
+    status.textContent = '⚠️ Quiz locked. Contact administrator.';
+    if(takeQuizBtn) takeQuizBtn.style.display = 'none';
+
+  } else if(moduleCompleted[0] && !quizCompleted[0]){
+    status.textContent = 'Module completed. Quiz still required.';
+    if(takeQuizBtn) takeQuizBtn.style.display = 'inline-block';
+
+  } else if(completed[0]){
+    status.textContent = 'Module and quiz completed.';
+
+  } else {
+    status.textContent = 'Status: Not completed.';
+  }
+updateNoticeMessage();
+updateCourseContent();
+}
+
+ 
+function show(view){
+  ['menu','player','quiz','complete'].forEach(id => {
+    const el = $(id);
+    if(el) el.classList.remove('active');
+  });
+
+  const active = $(view);
+  if(active) active.classList.add('active');
+
+  if(view !== 'player') stopVideo();
+}
+
+    function updatePlayerTitleWithCount(){
+      if(currentModuleIndex === null) return;
+      const base = modules[currentModuleIndex].t;
+      const total = currentPlaylist ? currentPlaylist.length : 1;
+      const current = currentPlaylist ? (playlistIndex + 1) : 1;
+      $('title').innerText = total > 1 ? `${base} (Part ${current} of ${total})` : base;
+    }
+
+    function startPlaylistForModule(i){
+      currentModuleIndex = i;
+      const src = modules[i].v;
+      currentPlaylist = Array.isArray(src) ? src.slice() : [src];
+      playlistIndex = 0;
+      playPlaylistItem();
+    }
+function playPlaylistItem(){
+  const v = $('video');
+  if(!v || !currentPlaylist) return;
+
+  const file = currentPlaylist[playlistIndex];
+
+  v.pause();
+  v.src = file;
+  v.load();
+
+  updatePlayerTitleWithCount();
+
+  v.onended = () => onPlaylistEnded();
+
+  const p = v.play();
+
+  if (p && typeof p.then === 'function') {
+    p.then(() => {
+      updateCustomPlayerUI();   // ✅ CRITICAL FIX
+    }).catch(() => {});
+  } else {
+    updateCustomPlayerUI();
+  }
+}
+function onPlaylistEnded(){
+  if(!currentPlaylist) return;
+
+  if(playlistIndex < currentPlaylist.length - 1){
+    playlistIndex++;
+    playPlaylistItem();
+    return;
+  }
+
+  const i = currentModuleIndex;
+
+  moduleCompleted[i] = true;
+  saveProgress();
+
+  currentPlaylist = null;
+  currentModuleIndex = null;
+  playlistIndex = 0;
+
+  updateMenuStatus();
+
+  // ✅ EXIT FULLSCREEN FIRST (critical fix)
+  const fs = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+  if (fs) {
+    (document.exitFullscreen?.() || document.webkitExitFullscreen?.() || document.msExitFullscreen?.());
+  }
+
+  // ✅ slight delay so UI updates properly after exiting fullscreen
+  setTimeout(() => {
+    if (!quizCompleted[i]) {
+      askQuizChoice(i);
+    } else {
+      show('menu');
+    }
+  }, 300);
+}
+
+
+    function loadModule(i){
+      show('player');
+      $('title').innerText = modules[i].t;
+      const v = $('video');
+      v.style.display = 'block';
+      setTimeout(() => {
+        startPlaylistForModule(i);
+        updateCustomPlayerUI();
+      }, 100);
+    }
+
+
+function startCourse(){
+  loadModule(0);
+
+  // ✅ trigger fullscreen after slight delay
+  setTimeout(() => {
+    const target = document.getElementById('playerFrame');
+    if (target.requestFullscreen) {
+      target.requestFullscreen();
+    } else if (target.webkitRequestFullscreen) {
+      target.webkitRequestFullscreen();
+    } else if (target.msRequestFullscreen) {
+      target.msRequestFullscreen();
+    }
+  }, 300);
+}
+
+
+
+    function askQuizChoice(i){
+      currentQuiz = i;
+      $('quizChoice').classList.add('active');
+      $('quizNowBtn').onclick = () => {
+        $('quizChoice').classList.remove('active');
+        goQuiz(i);
+      };
+      $('quizLaterBtn').onclick = () => {
+        $('quizChoice').classList.remove('active');
+        show('menu');
+      };
+    }
+
+function goQuiz(i){
+  if(isCourseCompletedAndLocked()) return;
+
+  const quizLocked = localStorage.getItem('CSFG_M1_QUIZ_LOCKED') === 'true';
+
+  if (quizLocked) {
+    showSystemAlert(
+      'Maximum quiz attempts reached. Please contact your administrator for assistance.'
+    );
+    return;
+  }
+
+  currentQuiz = i;
+  show('quiz');
+  $('quizTitle').innerText = modules[i].t + ' – Quiz';
+  $('quizFrame').src = modules[i].q;
+}
+
+    function exitQuizLikeLater(){
+      currentQuiz = null;
+      show('menu');
+      updateMenuStatus();
+    }
+
+    function quizDone(){
+      if(currentQuiz !== null){
+        quizCompleted[currentQuiz] = true;
+        completed[currentQuiz] = true;
+        saveProgress();
+        currentQuiz = null;
+      }
+if(completed.every(Boolean)){
+  localStorage.setItem(COURSE_COMPLETED_KEY,'true');
+
+  // ✅ Go straight to menu
+  show('menu');
+
+  // ✅ Update UI
+  updateMenuStatus();
+
+  // ✅ Update welcome message
+  const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  if (stored.learnerName) {
+    updateWelcomeMessageCompleted(stored.learnerName);
+  }
+}
+    }
+
+function exitQuizFromIframe(){
+  if(currentQuiz !== null){
+    quizCompleted[currentQuiz] = true;
+    completed[currentQuiz] = true;
+    saveProgress();
+    currentQuiz = null;
+  }
+
+  localStorage.setItem(COURSE_COMPLETED_KEY,'true');
+
+  // ✅ Go directly to menu
+  show('menu');
+
+  // ✅ Update UI
+  updateMenuStatus();
+
+  // ✅ Update welcome message
+  const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  if (stored.learnerName) {
+    updateWelcomeMessageCompleted(stored.learnerName);
+  }
+}
+
+
+    function stopVideo(){
+      const v = $('video');
+      if(!v) return;
+      try{
+        v.pause();
+        v.currentTime = 0;
+        v.removeAttribute('src');
+        v.load();
+      }catch(e){}
+      currentPlaylist = null;
+      currentModuleIndex = null;
+      playlistIndex = 0;
+      updateCustomPlayerUI(true);
+    }
+
+    function togglePlay(){
+      const v = $('video');
+      if(!v || !v.src) return;
+      if(v.paused) v.play().catch(() => {});
+      else v.pause();
+    }
+
+    function setMuted(m){
+      const v = $('video');
+      if(!v) return;
+      v.muted = m;
+      updateCustomPlayerUI();
+    }
+
+    function seekTo(t){
+      const v = $('video');
+      if(!v || !isFinite(v.duration)) return;
+      v.currentTime = Math.max(0, Math.min(v.duration, t));
+      updateCustomPlayerUI();
+    }
+
+    function toggleFullscreen(){
+      const target = $('playerFrame');
+      if(!target) return;
+      const fs = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+      if(!fs){
+        (target.requestFullscreen?.() || target.webkitRequestFullscreen?.() || target.msRequestFullscreen?.());
+      }else{
+        (document.exitFullscreen?.() || document.webkitExitFullscreen?.() || document.msExitFullscreen?.());
+      }
+    }
+
+    function updateCustomPlayerUI(reset=false){
+      const v = $('video');
+      if(!v) return;
+      const playBtn = $('playBtn');
+      const muteBtn = $('muteBtn');
+      const seek = $('seek');
+      const time = $('timeText');
+      if(reset){
+        if(playBtn) playBtn.textContent = '▶ Play';
+        if(muteBtn) muteBtn.textContent = '🔊';
+        if(seek){ seek.value = 0; seek.max = 0; }
+        if(time) time.textContent = '0:00 / 0:00';
+        return;
+      }
+      if(playBtn) playBtn.textContent = v.paused ? '▶ Play' : '⏸ Pause';
+      if(muteBtn) muteBtn.textContent = (v.muted || v.volume === 0) ? '🔇' : '🔊';
+      const dur = isFinite(v.duration) ? v.duration : 0;
+      const cur = isFinite(v.currentTime) ? v.currentTime : 0;
+
+	
+if (seek && dur > 0) {
+  seek.max = dur;
+
+  if (!isSeeking) {
+    seek.value = cur;
+  }
+}
+
+      
+      if(time) time.textContent = `${fmtTime(cur)} / ${fmtTime(dur)}`;
+    }
+
+function initCustomPlayer() {
+  const v = $('video');
+  if (!v) return;
+
+  v.controls = false;
+  v.setAttribute('playsinline', '');
+  v.setAttribute('disablepictureinpicture', '');
+
+  v.addEventListener('contextmenu', e => e.preventDefault());
+  v.addEventListener('click', togglePlay);
+
+  // ✅ Update slider + time display
+  v.addEventListener('timeupdate', () => {
+    updateCustomPlayerUI();
+
+    if (!isSeeking) {
+      const seek = $('seek');
+      if (seek) seek.value = v.currentTime;
+    }
+  });
+
+  // ✅ Set max duration when video loads
+  v.addEventListener('loadedmetadata', () => {
+    const seek = $('seek');
+    if (seek && isFinite(v.duration)) {
+      seek.max = v.duration;
+      seek.step = 0.1;
+    }
+  });
+
+  v.addEventListener('play', updateCustomPlayerUI);
+  v.addEventListener('pause', updateCustomPlayerUI);
+  v.addEventListener('volumechange', updateCustomPlayerUI);
+  v.addEventListener('seeking', updateCustomPlayerUI);
+  v.addEventListener('seeked', updateCustomPlayerUI);
+
+  // ✅ Buttons
+  $('playBtn')?.addEventListener('click', togglePlay);
+  $('muteBtn')?.addEventListener('click', () => setMuted(!v.muted));
+  $('fsBtn')?.addEventListener('click', toggleFullscreen);
+
+  // ✅ ✅ SINGLE clean seek control block
+  const seek = $('seek');
+
+  if (seek) {
+
+    // Smooth dragging
+    seek.addEventListener('input', () => {
+      if (!isFinite(v.duration)) return;
+
+      isSeeking = true;
+
+      const t = parseFloat(seek.value);
+      v.currentTime = t;
+
+      const time = $('timeText');
+      if (time) {
+        time.textContent = `${fmtTime(t)} / ${fmtTime(v.duration)}`;
+      }
+    });
+
+    // Release drag
+    seek.addEventListener('change', () => {
+      if (!isFinite(v.duration)) return;
+
+      isSeeking = false;
+    });
+  }
+
+  // ✅ Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (!$('player').classList.contains('active')) return;
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+
+    if (e.code === 'Space') {
+      e.preventDefault();
+      togglePlay();
+    } else if (e.code === 'ArrowRight') {
+      seekTo((v.currentTime || 0) + 5);
+    } else if (e.code === 'ArrowLeft') {
+      seekTo((v.currentTime || 0) - 5);
+    } else if (e.code === 'KeyM') {
+      setMuted(!v.muted);
+    } else if (e.code === 'KeyF') {
+      toggleFullscreen();
+    }
+  });
+
+  updateCustomPlayerUI(true);
+}
+    function setCertStatus(msg){ const el = $('certStatus'); if(el) el.textContent = msg; }
+    function ensurePdfLibLoaded(){
+      if(!window.PDFLib){
+        alert('PDF engine not loaded. Place pdf-lib.min.js in the same folder as this HTML, or allow the CDN fallback.');
+        return false;
+      }
+      return true;
+    }
+    function formatDateForCertificate(){
+      return new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'long', year:'numeric' }).format(new Date());
+    }
+    function clearPreview(){
+      if(lastGeneratedUrl){ URL.revokeObjectURL(lastGeneratedUrl); lastGeneratedUrl = null; }
+      lastGeneratedBlob = null;
+      const frame = $('certPreviewFrame');
+      if(frame) frame.src = 'about:blank';
+      const dl = $('downloadCertBtn');
+      if(dl) dl.disabled = true;
+    }
+    function isCourseComplete(){ return completed.filter(Boolean).length === modules.length; }
+    function updateCertificateButtons(){
+      const complete = isCourseComplete();
+      const preview = $('previewCertBtn');
+      const download = $('downloadCertBtn');
+      if(preview) preview.disabled = !complete || !!conclusionLocked;
+      if(download) download.disabled = !complete || !lastGeneratedBlob || !!conclusionLocked;
+      if(!complete){ setCertStatus(''); clearPreview(); }
+    }
+
+
+
+async function downloadCertificateDirect(){
+  const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  const name = stored.learnerName || '';
+
+  if (!name) {
+    alert("Learner name not found.");
+    return;
+  }
+
+  try {
+    const bytes = await buildCertificateBytes(name, formatDateForCertificate());
+    if (!bytes) return;
+
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+
+    // ✅ OPEN IN NEW TAB
+    window.open(url, '_blank');
+
+  } catch (e) {
+    alert("Could not generate certificate.");
+  }
+}
+
+async function loadTemplateFromServer(){
+  try {
+    setCertStatus('Template: loading embedded certificate...');
+
+    const binaryString = atob(EMBEDDED_CERT_TEMPLATE);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    certTemplateBytes = bytes.buffer;
+
+    setCertStatus('Template: loaded (embedded)');
+    clearPreview();
+
+    // ✅ Hide upload option
+    const input = document.getElementById('certTemplateUpload');
+    if (input && input.parentElement) {
+      input.parentElement.style.display = 'none';
+    }
+
+    return true;
+  } catch (e) {
+    setCertStatus('Template load failed.');
+    return false;
+  }
+}
+
+    function initCertificateTemplate(){
+      const up = $('certTemplateUpload');
+      if(!up) return;
+      up.addEventListener('change', () => {
+        const file = up.files && up.files[0];
+        if(!file) return;
+        const fr = new FileReader();
+        fr.onerror = () => alert('Unable to read the uploaded certificate PDF.');
+        fr.onload = () => {
+          certTemplateBytes = fr.result;
+          setCertStatus('Template: uploaded ' + file.name);
+          clearPreview();
+        };
+        fr.readAsArrayBuffer(file);
+      });
+      setCertStatus(`Template: please upload ${CERT_TEMPLATE_FILENAME} to generate the certificate.`);
+    }
+    async function buildCertificateBytes(name, dateStr){
+      const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
+      if(!certTemplateBytes){
+        alert(`No certificate template loaded. Ensure ${CERT_TEMPLATE_FILENAME} is next to the HTML, or upload it.`);
+        return null;
+      }
+      const safeName = (name || '').replace(/\s+/g,' ').trim();
+      const pdfDoc = await PDFDocument.load(certTemplateBytes);
+      const page = pdfDoc.getPages()[0];
+      const { width } = page.getSize();
+      const nameFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const dateFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const nameSize = 26;
+      const nameWidth = nameFont.widthOfTextAtSize(safeName, nameSize);
+      const nameX = Math.max(36, (width - nameWidth) / 2);
+      const CERT_NAME_Y = 485;
+      const CERT_DATE_X = 360;
+      const CERT_DATE_Y = 300;
+      page.drawText(safeName, { x:nameX, y:CERT_NAME_Y, size:nameSize, font:nameFont, color: rgb(0,0,0) });
+      page.drawText(dateStr, { x:CERT_DATE_X, y:CERT_DATE_Y, size:12, font:dateFont, color: rgb(0,0,0) });
+      return await pdfDoc.save();
+    }
+    async function previewCertificate(){
+      if(conclusionLocked) return;
+      if(!isCourseComplete()){
+        setCertStatus('Complete all modules (100%) before generating the certificate.');
+        return;
+      }
+      const name = (($('learnerName')?.value) || '').trim();
+      if(!name){ $('nameAlert').classList.add('active'); return; }
+      if(!ensurePdfLibLoaded()) return;
+      try{
+        const bytes = await buildCertificateBytes(name, formatDateForCertificate());
+        if(!bytes) return;
+        clearPreview();
+        const blob = new Blob([bytes], { type:'application/pdf' });
+        lastGeneratedBlob = blob;
+        lastGeneratedUrl = URL.createObjectURL(blob);
+        $('certPreviewFrame').src = lastGeneratedUrl;
+        updateCertificateButtons();
+        setCertStatus('Preview generated. You can now download the certificate.');
+      }catch(e){
+        alert('Could not generate the certificate preview.');
+      }
+    }
+    function downloadCertificate(){
+      if(conclusionLocked) return;
+      if(!isCourseComplete()){
+        setCertStatus('Complete all modules (100%) before downloading the certificate.');
+        return;
+      }
+      if(!lastGeneratedBlob || !lastGeneratedUrl){ previewCertificate(); return; }
+      const name = (($('learnerName')?.value) || '').trim();
+      const safe = (name || 'Learner').replace(/[^a-z0-9\- _]/gi,'').trim().replace(/\s+/g,'_');
+      const a = document.createElement('a');
+      a.href = lastGeneratedUrl;
+      a.download = `ITS_Integrator_Certificate_${safe}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+    function lockCompletionUI(lock){
+      const actions = $('completeActions');
+      if(actions) actions.classList.toggle('locked', !!lock);
+      $('conclusionGate').classList.toggle('active', !!lock);
+      $('certPreviewLock').classList.toggle('active', !!lock);
+      const nameInput = $('learnerName');
+      const previewBtn = $('previewCertBtn');
+      const downloadBtn = $('downloadCertBtn');
+      const exitBtn = $('exitCourseBtn');
+      if(nameInput) nameInput.disabled = !!lock;
+      if(previewBtn) previewBtn.disabled = !!lock || !isCourseComplete();
+      if(downloadBtn) downloadBtn.disabled = !!lock || !isCourseComplete() || !lastGeneratedBlob;
+      if(exitBtn) exitBtn.disabled = !!lock;
+    }
+
+function handleSystemAlertOk() {
+  closeSystemAlert();
+
+  if (systemAlertContext === 'enrolment') {
+    // ✅ Go back to enrolment popup
+    showEnrolmentPopup();
+  } else {
+    // ✅ Default behaviour (quiz etc.)
+    currentQuiz = null;
+    show('menu');
+    updateMenuStatus();
+  }
+
+  // ✅ Reset context after use
+  systemAlertContext = null;
+}
+
+
+function updateWelcomeMessage(name) {
+  const welcome = document.getElementById('welcomeText');
+  if (welcome && name) {
+    welcome.textContent = `Welcome, ${name}.`;
+  }
+}
+
+function updateWelcomeMessageCompleted(name) {
+  const welcome = document.getElementById('welcomeText');
+  if (welcome && name) {
+    welcome.textContent = `✅ Well done, ${name}. You have completed the course.`;
+  }
+}
+
+    function stopConclusionAudio(){
+      const a = $('conclusionAudio');
+      if(a){ try{ a.pause(); a.currentTime = 0; }catch(e){} }
+      conclusionLocked = false;
+      lockCompletionUI(false);
+    }
+    function closeNameAlert(){ $('nameAlert').classList.remove('active'); $('learnerName')?.focus(); }
+    function exitCourse(){
+      if(conclusionLocked) return;
+      localStorage.setItem(COURSE_COMPLETED_KEY,'true');
+      stopConclusionAudio();
+      show('menu');
+      updateMenuStatus();
+    }
+    function doResetProgress(){
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(COURSE_COMPLETED_KEY);
+      location.reload();
+    }
+
+    window.addEventListener('message', (event) => {
+      const d = event.data;
+      if(d === 'ITS_QUIZ_EXIT' || (d && d.type === 'ITS_QUIZ_EXIT')) exitQuizFromIframe();
+      if(d === 'ITS_QUIZ_DONE' || (d && d.type === 'ITS_QUIZ_DONE')) quizDone();
+
+// ✅ ADD THIS
+  if(d && d.type === 'ITS_QUIZ_MENU') {
+    exitQuizLikeLater();  // 👈 goes back to main menu WITHOUT completing
+  }
+
+    });
+
+window.addEventListener('load', () => {
+  loadProgress();
+  updateMenuStatus();
+  initCustomPlayer();
+updateNoticeMessage();
+updateCourseContent();
+
+
+// ✅ Optional debug
+      console.log("Valid users loaded:", validUsers);
+
+  loadTemplateFromServer().then(ok => {
+    if(!ok) initCertificateTemplate();
+  });
+
+  show('menu');
+
+  // ✅ NEW: show enrolment popup on load
+  setTimeout(() => {
+    const stored = JSON.parse(localStorage.getItem('CSFG_Progress_v3') || '{}');
+
+    if (!stored.learnerName) {
+      showEnrolmentPopup();
+    } else {
+      // ✅ preload name into certificate field
+      const learnerField = document.getElementById('learnerName');
+      if (learnerField) learnerField.value = stored.learnerName;
+
+// ✅ ADD THIS
+    updateWelcomeMessage(stored.learnerName);
+
+    }
+  }, 300);
+});
+
+
+  </script>
+</head>
+<body>
+  <header><h1>CYBER SECURITY FIELD GUIDE</h1></header>
+  <audio id="conclusionAudio" preload="auto"></audio>
+
+  <section id="menu" class="screen active">
+    <div class="menu-card">
+      <h2>CYBER SECURITY FIELD GUIDE - Module 1</h2>
+      <p class="subtitle">Cyber Security Fundamentals</p>
+<div class="menu-heading hint" id="courseContent">
+</div>
+
+
+<p id="welcomeText"
+   style="
+     display: inline-block;
+     font-size:15px;
+     margin-bottom:12px;
+     padding:10px 14px;
+     border-radius:12px;
+     background: rgba(0,176,240,0.15);
+     border:1px solid rgba(0,176,240,0.4);
+     color:#e6f6ff;
+     font-weight:500;
+   ">
+</p>
+<div class="notice" id="courseNotice">
+  <strong>This module includes a quiz for knowledge assessment</strong><br>
+  <strong>The module must be completed (100%) including quiz before the Certificate of Completion will be issued.</strong>
+</div>
+
+
+
+<div class="start-wrap" id="startButtons">
+
+  <button onclick="startCourse()" class="start-btn">
+    ▶ Start Module
+  </button>
+
+<a href="CSFG-Module1_manual.pdf" target="_blank"style="text-decoration:none;">
+  <button class="start-btn" style="margin-top:10px;">
+    📄 Download Training Manual
+  </button>
+</a>
+
+<a href="javascript:void(0)" onclick="downloadCertificateDirect()" style="text-decoration:none;">
+  <button class="start-btn" id="downloadCertMenuBtn" style="display:none; margin-top:10px;">
+    🎓 Download Certificate
+  </button>
+</a>
+
+
+  <!-- ✅ New button (hidden by default) -->
+  <button onclick="goQuiz(0)" id="takeQuizBtn" class="start-btn" style="display:none; margin-top:10px;">
+    📝 Resume Quiz
+  </button>
+</div>
+
+      <div id="moduleStatus" class="module-status">Status: Not completed.</div>
+    </div>
+  </section>
+
+  <section id="player" class="screen">
+    <div class="player-stage">
+      <h2 id="title" class="player-title">Cyber Security Fundamentals</h2>
+      <div id="playerFrame" class="player-frame">
+        <div id="playerViewport" class="player-viewport">
+          <video id="video"></video>
+        </div>
+        <div class="controls-bar" role="group" aria-label="Video controls">
+          <button id="playBtn" type="button">▶ Play</button>
+          <input id="seek" class="range" type="range" min="0" max="0" step="0.1" value="0" aria-label="Seek">
+          <div id="timeText" class="time-text">0:00 / 0:00</div>
+          <button id="muteBtn" type="button" class="secondary-btn">🔊</button>
+          <button id="fsBtn" type="button" class="secondary-btn">⛶</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="quiz" class="screen">
+    <div class="quiz-card">
+      <h2 id="quizTitle" class="quiz-title">Cyber Security Fundamentals – Quiz</h2>
+      <iframe id="quizFrame" title="Quiz content"></iframe>
+
+    </div>
+  </section>
+
+  <section id="complete" class="screen">
+    <div class="complete-card">
+      <h2 class="complete-title">Course Completed</h2>
+      <p class="hint" style="font-size:14px;max-width:820px;margin:0 auto;">
+        The objective of this course was to provide you with a foundational understanding of the technical components of the ITS Integrator system and the way its various software elements interact.
+        <br><br>
+        By now, you should possess a more comprehensive grasp of the technical terminology of the ITS Integrator system, which will aid you in effectively comprehending and supporting the platform.
+        <br><br>
+        For any additional information or technical assistance related to your environment, please reach out to Adapt IT Education Technical Services.
+      </p>
+      <div id="completeActions" class="row" style="margin-top:16px;">
+        <input id="learnerName" type="text" placeholder="Enter learner name">
+        <button id="previewCertBtn" type="button" onclick="previewCertificate()">👁 Preview Certificate</button>
+        <button id="downloadCertBtn" type="button" onclick="downloadCertificate()" disabled>⬇ Download Certificate</button>
+        <button id="exitCourseBtn" class="secondary-btn" type="button" onclick="exitCourse()">🚪 Return to main menu (Course Completed)</button>
+      </div>
+      <div id="certStatus" class="status">Template: loading…</div>
+      <div style="margin-top:12px;">
+        <h3 style="text-align:center;margin:0 0 10px;">Certificate Preview</h3>
+        <div id="certPreviewWrap">
+          <iframe id="certPreviewFrame" title="Certificate Preview"></iframe>
+          <div id="certPreviewLock">
+            <div>
+              <strong>Conclusion message playing…</strong>
+              <div style="font-size:13px;color:#334155;margin-top:6px;">Certificate actions will be available once the conclusion audio has finished.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="quizChoice" class="overlay" aria-modal="true" role="dialog">
+    <div class="modal-card">
+      <h3>✍️ Quiz Time?</h3>
+      <p>Would you like to complete the quiz now or later?</p>
+      <div class="row" style="margin-top:14px;">
+        <button id="quizNowBtn" type="button">📝 Do Quiz Now</button>
+        <button id="quizLaterBtn" type="button" class="secondary-btn">⏭ Do Quiz Later</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="nameAlert" class="overlay" aria-modal="true" role="dialog">
+    <div class="modal-card" style="max-width:430px;border-color:#d32f2f;">
+      <h3 style="color:#b71c1c;">Name Required</h3>
+      <p>The learner must enter a name before generating or downloading the certificate.</p>
+      <div class="row" style="margin-top:14px;">
+        <button class="danger-btn" type="button" onclick="closeNameAlert()">OK</button>
+      </div>
+    </div>
+  </div>
+<!-- ✅ Official System Alert -->
+<div id="systemAlert" class="overlay">
+  <div class="modal-card" style="max-width:420px; border:2px solid #ef4444;">
+    
+    <h3 style="margin:0 0 8px; color:#ef4444;">
+      ⚠️
+    </h3>
+
+    <p id="systemAlertMsg" style="font-size:14px; line-height:1.5; color:#334155;">
+      <!-- message goes here -->
+    </p>
+
+    <div class="row" style="margin-top:14px;">
+<button onclick="handleSystemAlertOk()" class="primary-btn">OK</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ✅ Learner Enrolment Popup -->
+<div id="enrolmentPopup" class="overlay">
+  <div class="modal-card" style="max-width:460px; text-align:center; padding:24px;">
+
+    <!-- Icon / Header -->
+    <div style="font-size:40px; margin-bottom:10px;">👤</div>
+
+    <h3 style="margin-bottom:6px; font-size:20px; color:#003366;">
+      Learner Access
+    </h3>
+
+    <p style="font-size:14px; color:#475569;">
+Please enter your access code to access the course
+    </p>
+
+    <!-- Input -->
+
+    <div style="margin-top:16px;">
+      <input id="enrolCodeInput"
+             type="text"
+             placeholder="Enter access code"
+             style="
+               width:100%;
+               padding:12px;
+               border-radius:8px;
+               border:1px solid #cbd5e1;
+               font-size:14px;
+               text-align:center;
+             "
+             onkeydown="if(event.key==='Enter'){confirmEnrolment()}">
+    </div>
+
+    <!-- Button -->
+    <div style="margin-top:18px;">
+      <button onclick="confirmEnrolment()"
+              style="
+                width:100%;
+                padding:12px;
+                font-size:15px;
+                font-weight:bold;
+                border-radius:10px;
+                background:linear-gradient(145deg, #00B0F0, #007fa6);
+                color:#fff;
+                border:none;
+                cursor:pointer;
+              ">
+        Continue
+      </button>
+    </div>
+
+    <!-- Optional helper text -->
+    <p style="margin-top:10px; font-size:12px; color:#94a3b8;">
+      Your name will be used on your completion certificate.
+    </p>
+
+  </div>
+</div>
+</body>
+</html>

@@ -1,4 +1,4 @@
-Laer<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
  <meta charset="UTF-8" />
@@ -10,17 +10,22 @@ Laer<!DOCTYPE html>
  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&family=Archivo+Black&display=swap" rel="stylesheet">
  <style>
 
- :root{
- --bg:#0f1226; --card:#151a4d; --accent:#7c7cff; --accent2:#4ade80;
- --gold:#facc15; --silver:#cbd5e1; --bronze:#f59e0b;
- --text:#eef0ff; --muted:#b8bcff;
- --danger:#fb7185;
- }
+ 
+:root{
+--bg:#eef4ff;
+--card:#151a4d;
+--accent:#7c7cff;
+--accent2:#4ade80;
+--text:#eef0ff;
+--muted:#151a4d;
+}
  *{box-sizing:border-box}
  body{
  margin:0; font-family:'Poppins',sans-serif; color:var(--text);
  background:radial-gradient(1200px 600px at 10% -10%,#1b1f6a,var(--bg));
  }
+
+
 /* =========================
        INTRO ADD: Intro screen
        ========================= */
@@ -263,7 +268,7 @@ Laer<!DOCTYPE html>
  background:linear-gradient(180deg,#1a1f6b,#12163a);border-radius:1.25rem;
  padding:1rem 1.25rem;box-shadow:0 20px 40px rgba(0,0,0,.35);margin-bottom:1.25rem
  }
- .hud .title{font-family:'Archivo Black',sans-serif;font-size:1.6rem}
+ .hud .title{font-family:'Archivo Black',sans-serif;font-size:1.6rem;color:#1e293b;}
  /* Subtitle (moved CTA under main heading) */
  .subtitle{
  margin-top:.35rem;
@@ -378,6 +383,38 @@ margin transparent;
  box-shadow:none
  }
  .panel h3{margin:.15rem 0 .75rem;font-family:'Archivo Black',sans-serif}
+.compare-top3-panel{
+  background:#0b235a;
+
+  border:3px solid #4f7edc;
+  border-radius:18px;
+
+  padding:1.2rem;
+  margin:1rem 0;
+
+  color:#ffffff;
+
+  box-shadow:
+    0 6px 16px rgba(0,0,0,.25),
+    inset 0 0 0 1px rgba(255,255,255,.15);
+}
+
+.compare-top3-panel h3{
+  color:#ffffff;
+  text-align:center;
+  font-weight:900;
+  margin-top:0;
+  margin-bottom:1rem;
+}
+
+.compare-top3-panel table,
+.compare-top3-panel th,
+.compare-top3-panel td,
+.compare-top3-panel p,
+.compare-top3-panel span,
+.compare-top3-panel strong{
+  color:#ffffff;
+}
 .panel-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;}
 .panel-head h3{margin:0;}
 .panel-head .badge-pill{width:auto;text-align:left;font-size:.85rem;}
@@ -582,7 +619,7 @@ max-height: 96dvh;
   background: rgba(255,255,255,.14);
   border: 1px solid rgba(255,255,255,.25);
   color: #ffffff;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 /* Primary retake button emphasis */
@@ -1533,14 +1570,6 @@ body.hide-top-heading #gameHUD .subtitle{display:none !important;}
 
 .wow-text{position:relative; z-index:1;}
 
-.wow-eyebrow{
-  font-weight:900;
-  letter-spacing:.14em;
-  font-size:.72rem;
-  color:#eafff3;
-  opacity:.92;
-}
-
 .wow-title{
   margin:.25rem 0 .25rem;
   font-family:'Archivo Black',sans-serif;
@@ -1551,8 +1580,8 @@ body.hide-top-heading #gameHUD .subtitle{display:none !important;}
 
 .wow-sub{
   margin:0;
-  color:#dfe1ff;
-  opacity:.95;
+  color:#00143a !important;
+  opacity:1;
   font-size:.92rem;
   line-height:1.45;
 }
@@ -1567,8 +1596,8 @@ body.hide-top-heading #gameHUD .subtitle{display:none !important;}
  ========================= */
 #wowHUD .title{
   font-family:'Archivo Black',sans-serif;
+  color:#ffffff !important;
 }
-
 .wow-card{
   position:relative;
   overflow:hidden;
@@ -1610,12 +1639,34 @@ body.hide-top-heading #gameHUD .subtitle{display:none !important;}
 }
 
 .wow-text{position:relative; z-index:1;}
+
 .wow-eyebrow{
-  font-weight:900;
-  letter-spacing:.14em;
-  font-size:.72rem;
-  color:#eafff3;
-  opacity:.92;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  padding:.55rem 1rem;
+  margin-bottom:.5rem;
+
+  font-family:'Archivo Black',sans-serif;
+  font-size:1.15rem;
+  letter-spacing:.08em;
+
+  color:#1a1400;
+
+  background:linear-gradient(
+    135deg,
+    rgba(250,204,21,.98),
+    rgba(245,158,11,.90)
+  );
+
+  border:1px solid rgba(255,255,255,.35);
+  border-radius:999px;
+
+  box-shadow:
+    0 6px 0 rgba(0,0,0,.25),
+    0 12px 24px rgba(0,0,0,.35),
+    0 0 20px rgba(250,204,21,.35);
 }
 .wow-title{
   margin:.25rem 0 .25rem;
@@ -1733,6 +1784,8 @@ No grey-out when disabled + unlock glow + pulse + subtle shine
     0 0 38px rgba(124,124,255,0.25); /* blue aura */
   animation: decisionPulse 1.6s ease-in-out infinite;
 }
+
+
 
 /* ✅ subtle "ready to decide" shine sweep (only when unlocked) */
 .btn-decision.decision-ready::after{
@@ -2326,10 +2379,13 @@ justify-content: flex-start;   /* ✅ remove space-between */
    ========================= */
 
 #scoreboardPanel {
-  border: 2px solid #7c7cff !important;   /* solid visible border */
-  border-radius: 1.25rem;                /* keep your rounded look */
-  padding: 1rem;                         /* space inside border */
+  background: #dbe4f5;      /* darker than page background */
+  border: 2px solid #94a3b8;
+  border-radius: 1.25rem;
+  padding: 1rem;
+  color: #0f172a;
 }
+
 
 #pathwaysGrid {
   margin-top: 1.5rem !important;
@@ -2413,6 +2469,108 @@ justify-content: flex-start;   /* ✅ remove space-between */
 /* ✅ Flash for Done button */
 .done-flash {
   animation: decisionFlash 1.2s ease-in-out infinite;
+}
+
+/* =========================
+   SCOREBOARD PILLS = NAVY
+   ========================= */
+
+#scoreboardPanel .badge-pill,
+#scoreboardPanel .info-pill,
+#scoreboardPanel .score-pill{
+    background:#0b235a !important;
+    border:1px solid #06163a !important;
+    color:#ffffff !important;
+}
+
+/* Badge counter pill */
+#xpPill{
+    background:#0b235a !important;
+    border:1px solid #06163a !important;
+    color:#ffffff !important;
+}
+
+/* Score pills */
+#scoreboardPanel .score-pill{
+    background:#0b235a !important;
+}
+
+/* Reset button */
+#resetBtn{
+    background:#0b235a !important;
+    border:1px solid #06163a !important;
+    color:#ffffff !important;
+
+    font-size:.9rem !important;
+    padding:.5rem .75rem !important;
+    line-height:1.2;
+}
+
+/* Cancel Reset button */
+.cancel-reset{
+    background:#0b235a !important;
+    border:1px solid #06163a !important;
+    color:#ffffff !important;
+}
+
+/* =========================
+   FINAL DECISION LOCK BANNER
+   ========================= */
+.final-decision-lock-banner{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:.4rem;
+
+  padding:.45rem .9rem;
+  margin-top:.4rem;
+
+  border-radius:999px;
+
+  background:linear-gradient(
+    135deg,
+    rgba(250,204,21,.95),
+    rgba(245,158,11,.85)
+  );
+
+  color:#1a1400;
+  font-weight:900;
+  font-size:.95rem;
+
+  border:1px solid rgba(255,255,255,.35);
+
+  box-shadow:
+    0 6px 0 rgba(0,0,0,.25),
+    0 12px 22px rgba(0,0,0,.35),
+    0 0 18px rgba(250,204,21,.35);
+
+  animation: finalDecisionLockPulse 2s ease-in-out infinite;
+}
+
+@keyframes finalDecisionLockPulse{
+  0%,100%{
+    transform:translateY(0);
+    box-shadow:
+      0 6px 0 rgba(0,0,0,.25),
+      0 12px 22px rgba(0,0,0,.35),
+      0 0 18px rgba(250,204,21,.35);
+  }
+
+  50%{
+    transform:translateY(-2px);
+    box-shadow:
+      0 8px 0 rgba(0,0,0,.25),
+      0 18px 30px rgba(0,0,0,.40),
+      0 0 28px rgba(250,204,21,.60);
+  }
+}
+
+#pathwayDetailTitle{
+    color:#ffffff !important;
+}
+
+.final-decision-title{
+  color:#ffffff;
 }
 
 
@@ -2542,8 +2700,8 @@ justify-content: flex-start;   /* ✅ remove space-between */
 </button>
 
 <button class="badge-pill" id="viewWinnersBtn" type="button"
- style="display:none; background:rgba(250,204,21,.28); border:1px solid rgba(255,255,255,.22); color:#ffffff; cursor:pointer;">
- 🏆 Pathway Lounge
+ style="display:none; background:rgba(250,204,21,.28); border:1px solid rgba(255,255,255,.22); color:#ffffff; cursor:pointer;font-size:.9rem ">
+ 🏆 Pathway Lounge ➡️
 </button>
 
 
@@ -2562,7 +2720,8 @@ justify-content: flex-start;   /* ✅ remove space-between */
 Select a pathway. Start with your most likely pathway.<br>
 The more pathways you complete, the clearer your results become.<br> 
 Minimum of 4 pathways must be selected before the top 3 will be unlocked.<br>    
-Collect a Badge for every Pathway completed.
+Collect a Badge for every Pathway completed.<br><br>
+Note: The Paths with a weight higher 1 are currently high-demand "Scarce Skills" in South Africa and often lead to faster employment.
 
   </div>
 
@@ -2587,7 +2746,7 @@ Collect a Badge for every Pathway completed.
       <div>
         <div class="title">✨ Pathway Lounge</div>
         <div class="subtitle">
-          <strong>There are your Top 3 pathways</strong>
+          <strong>Here are your Top 3 pathways</strong>
         </div>
       </div>
 
@@ -2612,12 +2771,19 @@ Collect a Badge for every Pathway completed.
       <div class="wow-card" role="status" aria-live="polite">
         <div class="wow-badge" aria-hidden="true">🏁</div>
         <div class="wow-text">
-          <div class="wow-eyebrow">GOAL COMPLETED</div>
+          <div class="wow-eyebrow">Level Completed !</div>
 
 <p class="wow-sub" style="margin-top:.35rem;">
-  Tap the <strong>🥇🥈🥉 pathway buttons</strong> to view the details. <br>
-  (Recommended next steps, Practical overview, Strengths & Challenges).<br>
-	📌 You can re-read the details even if they are marked ✅ Read. 
+  Tap the <strong>pathway buttons</strong> to view the following details:<br>
+  Recommended next steps<br>
+  Practical overview<br>
+  Strengths & Challenges.<br><br>
+⚠️<strong>You have to read all 3 items for each pathway before unlocking to the next level.</strong> <br>
+<div id="finalDecisionAccess">
+  <span class="final-decision-lock-banner">
+    🔒 Make Final Decision is locked
+  </span>
+</div>
 </p>
           <!-- Auto-filled Top 3 -->
           
@@ -2632,6 +2798,80 @@ Collect a Badge for every Pathway completed.
 </section>  <!-- end wowPage -->
 
 <!-- =========================
+ FINAL DECISION UNLOCK PAGE
+ ========================= -->
+<section id="decisionUnlockPage"
+         class="winner-page"
+         style="display:none;"
+         aria-label="Final Decision Unlock">
+
+  <div class="wrap">
+
+    <section class="panel">
+
+      <div class="card compact-card" style="
+        background: linear-gradient(
+          135deg,
+          rgba(255,221,87,0.95),
+          rgba(250,204,21,0.75)
+        );
+        color:#1a1400;
+        border:2px solid rgba(255,255,255,.4);
+        box-shadow:
+          0 12px 28px rgba(0,0,0,.35),
+          0 0 18px rgba(250,204,21,.35);
+        display:block;
+        width:100%;
+        max-width:100%;
+      ">
+
+        <div style="
+          font-weight:900;
+          font-size:1.4rem;
+          margin-bottom:.6rem;
+          padding:.45rem .7rem;
+          border-radius:.6rem;
+          background:rgba(255,255,255,.35);
+          text-align:center;
+        ">
+          🎯 Final Decision Unlocked!
+        </div>
+
+        <p style="margin:0;font-size:1rem;text-align:center;">
+          ✅ All 3 Top pathways have been fully read.<br>
+          You can now make your final decision.<br><br>
+        </p>
+
+        <p style="margin-top:.5rem;font-size:1rem;text-align:center;">
+          📌<strong>
+            You have completed all Pathway Lounge requirements
+            and unlocked the Final Decision stage.
+          </strong>
+        </p>
+
+        <div style="margin-top:1rem;text-align:center;">
+
+      <button
+  class="badge-pill nav-pill"
+  onclick="
+    state.finalDecisionNoticeShown = true;
+    saveState();
+    showFinalDecisionScreen();
+  ">
+  ➡️ Final Decision
+</button>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+</section>
+
+<!-- =========================
  FINAL DECISION SCREEN
  ========================= -->
 <section id="finalDecisionScreen" class="winner-page" style="display:none;">
@@ -2639,7 +2879,9 @@ Collect a Badge for every Pathway completed.
 
 <section class="hud" id="finalDecisionHUD">
       <div>
-        <div class="title">🎯 Final Decision</div>
+<div class="title" style="color:#ffffff !important;">
+  🎯 Final Decision
+</div>
         <div class="subtitle">
           Answer all questions for all 3 pathways honestly.<br>
 	  This ensures your final decision is accurate and realistic.
@@ -2679,9 +2921,50 @@ Collect a Badge for every Pathway completed.
       
     </section>
 
+  <section class="panel compare-top3-panel">
+  <h3>Compare your Top 3 pathways</h3>
+  <div id="decisionTable"></div>
+</section>
+
+  </div>
+</section>
+
+<!-- =========================
+ TOP 3 VALIDATION SCREEN
+ ========================= -->
+<section id="top3ValidationScreen"
+         class="winner-page"
+         style="display:none;
+background:#081f4d;
+6
+min-height:100vh;
+">
+
+  <div class="wrap">
+
+    <section class="hud">
+      <div>
+  
+<div class="title" style="color:white;">
+  ✅ Final Validation
+</div>
+
+        <div class="subtitle">
+          Complete a final reflection for your
+          top three pathways.
+        </div>
+      </div>
+    </section>
+
     <section class="panel">
-      <h3>Compare your Top 3 pathways</h3>
-      <div id="decisionTable"></div>
+      <div id="validationContainer"></div>
+
+      <button
+        class="btn"
+        id="calculateValidationBtn"
+        style="margin-top:1rem;">
+        🎯 Calculate Final Pathway
+      </button>
     </section>
 
   </div>
@@ -3063,8 +3346,246 @@ const DECISION_QUESTIONS = [
   "⏱ Are you willing to commit time?",
   "💯 Are you willing to commit effort?",
   "🎯 Does it support your short & long-term goals?",
-  "🚀 Are you ready to take action in the next 30 days?"
+  "🚀 Are you ready to take action in the next 30 days?",
+"I can realistically afford this pathway.",
+  "I understand the requirements.",
+  "My support system is strong enough.",
+  "I am emotionally ready.",
+  "I am willing to commit the necessary time.",
+  "I would still choose this pathway even if challenges arise."
+
 ];
+const VALIDATION_QUESTIONS = {
+
+  "Further Study (Academic)": [
+    {
+      area:"Finance",
+      question:"I have a clear plan to pay for my tuition, textbooks, and living expenses next year."
+    },
+    {
+      area:"Qualification",
+      question:"My final high school grades meet the entry requirements for my chosen program."
+    },
+    {
+      area:"Mental Health",
+      question:"I feel ready to handle the stress of high-stakes exams and a heavy academic workload."
+    },
+    {
+      area:"Support & Resources",
+      question:"I know exactly where to find academic tutoring or peer mentoring on my new campus."
+    }
+  ],
+
+  "Gap Year": [
+    {
+      area:"Finance",
+      question:"I have saved enough money (or have a funding plan) to cover my travel or living costs."
+    },
+    {
+      area:"Qualification",
+      question:"I have researched the requirements or travel visas needed for my planned activities."
+    },
+    {
+      area:"Mental Health",
+      question:"I am confident in my ability to stay self-motivated without a rigid daily school routine."
+    },
+    {
+      area:"Support & Resources",
+      question:"I have an emergency point of contact or insurance plan in place if something goes wrong."
+    }
+  ],
+
+  "Work & Income Path": [
+    {
+      area:"Finance",
+      question:"My expected starting wage will comfortably cover my basic needs and cost of living."
+    },
+    {
+      area:"Qualification",
+      question:"My current CV, references, and job-hunting skills are ready for immediate use."
+    },
+    {
+      area:"Mental Health",
+      question:"I feel prepared to handle the shift from a school environment to full-time workplace dynamics."
+    },
+    {
+      area:"Support & Resources",
+      question:"I have a trusted mentor or professional contact who can give me sound workplace advice."
+    }
+  ],
+
+  "Apprenticeships & Trades": [
+    {
+      area:"Finance",
+      question:"I can afford the basic tools, work gear, or transport required to start my job."
+    },
+    {
+      area:"Qualification",
+      question:"I have secured (or know how to find) a registered employer to sponsor my trade hours."
+    },
+    {
+      area:"Mental Health",
+      question:"I am physically and mentally ready for the demanding environment of hands-on labor."
+    },
+    {
+      area:"Support & Resources",
+      question:"I have reliable transportation to get me to changing job sites early in the morning."
+    }
+  ],
+
+  "Entrepreneurship & Business": [
+    {
+      area:"Finance",
+      question:"I have access to the startup capital or resources needed to launch my business idea."
+    },
+    {
+      area:"Qualification",
+      question:"I understand the legal basics of registering a business and managing business taxes."
+    },
+    {
+      area:"Mental Health",
+      question:"I can handle the emotional highs and lows of financial uncertainty and self-employment."
+    },
+    {
+      area:"Support & Resources",
+      question:"I have an experienced business owner or advisor I can turn to when making tough choices."
+    }
+  ],
+
+  "Skills‑Based Path": [
+    {
+      area:"Finance",
+      question:"I have compared the cost of this short course against the salary it will help me earn."
+    },
+    {
+      area:"Qualification",
+      question:"I know that the specific certificate I earn is highly valued by employers in that industry."
+    },
+    {
+      area:"Mental Health",
+      question:"I feel ready for an intense, fast-paced learning environment that moves very quickly."
+    },
+    {
+      area:"Support & Resources",
+      question:"I have access to a reliable, modern computer and a quiet space at home to practice."
+    }
+  ],
+
+  "Military / Public Service": [
+    {
+      area:"Finance",
+      question:"I fully understand the pay structure, benefits, and long-term financial commitments involved."
+    },
+    {
+      area:"Qualification",
+      question:"I am confident I can pass the strict medical, physical fitness, and background checks."
+    },
+    {
+      area:"Mental Health",
+      question:"I am emotionally prepared for high-discipline environments and long periods away from home."
+    },
+    {
+      area:"Support & Resources",
+      question:"I have discussed my decision with my family or close friends, and they support my choice."
+    }
+  ],
+
+  "Internships & Learnerships": [
+    {
+      area:"Finance",
+      question:"I can manage my living expenses if the internship is low-paid or offers only a small stipend."
+    },
+    {
+      area:"Qualification",
+      question:"I meet the age, grade, or specific subject prerequisites required by the program provider."
+    },
+    {
+      area:"Mental Health",
+      question:"I feel confident entering an environment where I will have to take feedback and learn on the job."
+    },
+    {
+      area:"Support & Resources",
+      question:"I have professional references ready to vouch for my work ethic."
+    }
+  ],
+
+  "Personal Development Year": [
+    {
+      area:"Finance",
+      question:"I have discussed a financial agreement with my family regarding food and housing during this year."
+    },
+    {
+      area:"Qualification",
+      question:"I have a structured list of specific life skills I plan to achieve."
+    },
+    {
+      area:"Mental Health",
+      question:"I have a plan to prevent feelings of isolation while my peers move on to work or study."
+    },
+    {
+      area:"Support & Resources",
+      question:"I have an accountability partner who will keep me on track."
+    }
+  ],
+
+  "Creative Path": [
+    {
+      area:"Finance",
+      question:"I have a backup income source to support myself while I build my creative portfolio."
+    },
+    {
+      area:"Qualification",
+      question:"I have a digital portfolio or audition pieces that match industry standards."
+    },
+    {
+      area:"Mental Health",
+      question:"I am resilient enough to handle constructive criticism and frequent rejection of my creative work."
+    },
+    {
+      area:"Support & Resources",
+      question:"I belong to (or know how to join) a local or online community of creatives for networking."
+    }
+  ],
+
+  "Hybrid Path": [
+    {
+      area:"Finance",
+      question:"The income from my part-time job will directly cover my tuition and living costs."
+    },
+    {
+      area:"Qualification",
+      question:"I have been accepted into the study program and secured a flexible employment opportunity."
+    },
+    {
+      area:"Mental Health",
+      question:"I have the time-management skills to balance both work and study without burning out."
+    },
+    {
+      area:"Support & Resources",
+      question:"Both my employer and educational provider are flexible enough to accommodate my schedule."
+    }
+  ],
+
+  "Alternative Education Models": [
+    {
+      area:"Finance",
+      question:"I have reliable access to the technology and internet required to study from home."
+    },
+    {
+      area:"Qualification",
+      question:"I have verified that this educational path is recognized by future employers."
+    },
+    {
+      area:"Mental Health",
+      question:"I possess the self-discipline required to study independently."
+    },
+    {
+      area:"Support & Resources",
+      question:"I have a supportive environment that respects my study time."
+    }
+  ]
+
+};
 
 const FINAL_PATHWAY_DESCRIPTIONS = {
   academic: "This pathway is for learners who want to grow their knowledge, strengthen their qualifications, and build toward a professional future through university, college, or formal study. It opens doors to careers that need recognised credentials and rewards commitment, curiosity, and long-term vision.",
@@ -4395,8 +4916,14 @@ function wireYnPills(root){
 }
 
 function showFinalDecisionScreen(){
+const unlockPage =
+    document.getElementById('decisionUnlockPage');
   const wowPage = document.getElementById('wowPage');
   const finalScreen = document.getElementById('finalDecisionScreen');
+
+if(unlockPage){
+  unlockPage.style.display = 'none';
+}
 
   // ✅ Restore the original Final Decision layout
   if (finalDecisionOriginalHTML) {
@@ -4409,7 +4936,20 @@ function showFinalDecisionScreen(){
   // ✅ Re-bind controls because innerHTML was restored
   bindFinalDecisionBack();
   bindFinalDecisionScoring();
+document.addEventListener(
+  "click",
+  function(e){
 
+    if(
+      e.target &&
+      e.target.id ===
+      "calculateValidationBtn"
+    ){
+      calculateValidationResults();
+    }
+
+  }
+);
   // ✅ Rebuild the comparison table
   renderDecisionTable();
 
@@ -4586,6 +5126,171 @@ container.querySelectorAll('input[type="radio"]').forEach(input => {
 
 
 }
+
+function showTop3Validation(){
+
+  const top3 = getTopEntries(3);
+
+  const finalScreen =
+    document.getElementById(
+      "finalDecisionScreen"
+    );
+
+  const validationScreen =
+    document.getElementById(
+      "top3ValidationScreen"
+    );
+
+  finalScreen.style.display = "none";
+  validationScreen.style.display = "block";
+
+  const container =
+    document.getElementById(
+      "validationContainer"
+    );
+
+  container.innerHTML = "";
+
+  top3.forEach((pathway,index)=>{
+
+    let html = `
+      <div class="card">
+
+      <h3>
+        ${pathway.icon}
+        ${pathway.title}
+      </h3>
+    `;
+const questions =
+  VALIDATION_QUESTIONS[
+    pathway.title
+  ] || [];
+
+questions.forEach(
+  (item,qIndex)=>{
+   
+      html += `
+      <div style="
+        margin-bottom:1rem;
+      ">
+
+    <p>
+  <strong>${item.area}:</strong>
+  ${item.question}
+</p>
+      <div class="fd-yn yn-pills">
+
+      <label>
+      <input
+        type="radio"
+        name="val_${index}_${qIndex}"
+        value="2"> ✅ Yes
+      </label>
+
+      <label>
+      <input
+        type="radio"
+        name="val_${index}_${qIndex}"
+        value="1"> 🤔 Maybe
+      </label>
+
+      <label>
+      <input
+        type="radio"
+        name="val_${index}_${qIndex}"
+        value="0"> ❌ No
+      </label>
+
+      </div>
+
+      </div>
+      `;
+    });
+
+    html += "</div>";
+
+    container.innerHTML += html;
+  });
+
+  wireYnPills(container);
+}
+function calculateValidationResults(){
+
+  const top3 = getTopEntries(3);
+
+  validationResults = [];
+
+  top3.forEach((pathway,pIndex)=>{
+
+    let score = 0;
+
+
+
+const questions =
+  VALIDATION_QUESTIONS[
+    pathway.title
+  ] || [];
+
+questions.forEach(
+  (_,qIndex)=>{
+
+      const selected =
+        document.querySelector(
+          `input[name="val_${pIndex}_${qIndex}"]:checked`
+        );
+
+      if(selected){
+        score += Number(
+          selected.value
+        );
+      }
+
+    });
+
+    validationResults.push({
+
+      id:pathway.id,
+
+      validationScore:score
+
+    });
+
+  });
+
+  calculateFinalPathway();
+}
+function calculateFinalPathway(){
+
+  const scores =
+    window.finalDecisionScores;
+
+  scores.forEach(item=>{
+
+    const validation =
+      validationResults.find(
+        v=>v.id===item.id
+      );
+
+    item.finalDecisionScore +=
+      validation
+      ? validation.validationScore
+      : 0;
+
+  });
+
+  scores.sort(
+    (a,b)=>
+    b.finalDecisionScore -
+    a.finalDecisionScore
+  );
+
+  showFinalWinner(
+    scores[0],
+    scores
+  );
+}
+
+
 function showFinalWinner(winner, scores){
 const finalDesc = FINAL_PATHWAY_DESCRIPTIONS[winner.id] || winner.desc;
   const screen = document.getElementById('finalDecisionScreen');
@@ -5108,6 +5813,7 @@ border: 2px solid #60a5fa;
   box-shadow: 0 6px 18px rgba(0,0,0,0.2);
 }
 
+
       </style>
     </head>
     <body>
@@ -5443,56 +6149,68 @@ function resetOpenedTop3IfTopChanged(){
 let __decisionWasReady = false;
 
 function updateDecisionGateUI(){
-  const btn = document.getElementById('decisionBtn');
-  const hint = document.getElementById('decisionGateHint');
-  if(!btn || !hint) return;
 
-const top3 = getTopEntries(3).map(p => p.id);
+  const top3 = getTopEntries(3).map(p => p.id);
 
-// ✅ NEW: ready only when each of the 3 top pathways has ALL 3 items read
-const fullyReadCount = top3.filter(id => getReadProgress(id).count === 3).length;
-const ready = (fullyReadCount === 3);
+  const fullyReadCount = top3.filter(
+    id => getReadProgress(id).count === 3
+  ).length;
 
-  // ✅ Disable/enable (NO greying out)
-  btn.disabled = !ready;
+  const ready = (fullyReadCount === 3);
 
-  // ✅ Toggle label + classes
-  if(ready){
-    btn.textContent = "🎯 Make Final Decision";
-    btn.classList.remove("decision-locked");
-    btn.classList.add("decision-ready");
+  const access =
+    document.getElementById("finalDecisionAccess");
 
+  /* FIRST TIME ONLY */
+if(
+  ready &&
+  !state.finalDecisionNoticeShown
+){
 
-hint.innerHTML = `
-  <span style="font-size:.90rem; color:#ffffff;">
-    ✅ All 3 Top pathways fully read (Recommended, Overview, Strengths &amp; Challenges). You may now make your final decision.
-  </span>
-`;
+  state.finalDecisionUnlocked = true;
 
+  saveState();
 
-    // ✅ one-time “ready” pop when it unlocks
-    if(!__decisionWasReady){
-      btn.classList.add("decision-pop");
-      setTimeout(() => btn.classList.remove("decision-pop"), 450);
+  document.getElementById("wowPage").style.display = "none";
+
+  document.getElementById("decisionUnlockPage").style.display = "block";
+
+  return;
+}
+
+  /* RETURN VISITS */
+
+  if(access){
+
+    if(state.finalDecisionUnlocked){
+
+      access.innerHTML = `
+        <button
+          class="badge-pill nav-pill"
+          onclick="showFinalDecisionScreen()"
+          style="
+            margin-top:.4rem;
+            font-size:1rem;
+            font-weight:900;
+          ">
+          🔓 Make Final Decision is unlocked<br>
+          ➡️ Final Decision
+        </button>
+      `;
+
+    }else{
+
+      access.innerHTML = `
+        <span class="final-decision-lock-banner">
+          🔒 Make Final Decision is locked
+        </span>
+      `;
+
     }
-} else {
-  btn.textContent = "🔒 Make Final Decision";
-  btn.classList.remove("decision-ready");
-  btn.classList.add("decision-locked");
 
-hint.innerHTML = `
-  <span style="font-size:.90rem; color:#ffffff;">
-    🔒 Read all 3 items for each pathway before making final decision.
-
-  </span>
-`;
+  }
 
 }
-
-
-  __decisionWasReady = ready;
-}
-// ===== Winner Summary Page (Top 1,2,3) =====
 
 function updateWowPage(){
   const wrap = document.getElementById('wowTop3');
@@ -5546,27 +6264,12 @@ return `
 `;
   }).join('');
 
-// ✅ Gate hint (shows progress)
-  const gateHint = document.createElement("div");
-  gateHint.className = "muted";
-  gateHint.id = "decisionGateHint";
-  gateHint.style.marginTop = ".35rem";
-  wrap.appendChild(gateHint);
+// ✅ Final Decision unlock area
+const decisionBlock = document.createElement("div");
+decisionBlock.id = "decisionUnlockBlock";
+decisionBlock.style.marginTop = "1rem";
 
-  // ✅ Final Decision button (disabled until 3/3 viewed)
-  const decisionBtn = document.createElement("button");
- 
-decisionBtn.className = "btn btn-decision decision-locked";
-decisionBtn.id = "decisionBtn";
-decisionBtn.disabled = true; // locked by default until 3/3 viewed
-decisionBtn.textContent = "🔒 Make Final Decision";
-decisionBtn.style.width = 'fit-content';
-decisionBtn.style.alignSelf = 'flex-start';
-
-  decisionBtn.style.marginTop = "0.75rem";
-  decisionBtn.onclick = showFinalDecisionScreen;
-  wrap.appendChild(decisionBtn);
-
+wrap.appendChild(decisionBlock);
   // ✅ Apply gate rules now that elements exist
   updateDecisionGateUI();
 }
@@ -5585,6 +6288,7 @@ function showWowPage(){
 resetOpenedTop3IfTopChanged(); 
   updateWowPage();
   window.scrollTo(0,0);
+updateDecisionGateUI();
 }
 
 function hideWowPage(){
@@ -5974,6 +6678,7 @@ const els = {
 let state = loadState();
 let activePathway = null;
 let latestStudentReport = null;
+let validationResults = [];
 
 // ✅ One-by-one question state
 
@@ -5990,9 +6695,21 @@ function loadState(){
     const parsed = JSON.parse(raw);
     if(!parsed.completed) parsed.completed = {};
     if(!parsed.read) parsed.read = {}; // ✅ add this
+if(typeof parsed.finalDecisionUnlocked === "undefined"){
+  parsed.finalDecisionUnlocked = false;
+}
+if(typeof parsed.finalDecisionNoticeShown === "undefined"){
+  parsed.finalDecisionNoticeShown = false;
+}
     return parsed;
   } catch {
-    return { completed: {}, read: {} }; // ✅ add read
+
+return {
+  completed: {},
+  read: {},
+  finalDecisionUnlocked: false,
+  finalDecisionNoticeShown: false
+};
   }
 }
 
@@ -6673,8 +7390,9 @@ if (closeBtn) {
       scores.push({ ...p, finalDecisionScore: score });
     }
 
-    const winner = scores.sort((a,b)=>b.finalDecisionScore - a.finalDecisionScore)[0];
-    showFinalWinner(winner, scores);
+window.finalDecisionScores = scores;
+
+showTop3Validation();
   });
 }
 
@@ -6795,21 +7513,30 @@ function disarmReset(){
 }
 
 function bindFinalDecisionBack(){
+
   const btn = document.getElementById('backToWowFromDecision');
+
   if(!btn) return;
 
   btn.addEventListener('click', () => {
-    const finalScreen = document.getElementById('finalDecisionScreen');
-    const wowPage = document.getElementById('wowPage');
+
+    const finalScreen =
+      document.getElementById('finalDecisionScreen');
+
+    const wowPage =
+      document.getElementById('wowPage');
 
     finalScreen.style.display = 'none';
     wowPage.style.display = 'block';
 
+    updateWowPage();
+    updateDecisionGateUI();
+
     window.scrollTo(0, 0);
+
   });
+
 }
-
-
 // ================================
 // Init
 // ================================
